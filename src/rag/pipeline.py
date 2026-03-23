@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-RAG Pipeline with Ollama Integration + Research Gap Detection
-Optimized for M2 MacBook Air (CPU-only, limited resources)
+RAG Pipeline with Groq API Integration + Research Gap Detection
+Cloud-native deployment with fast inference
 """
 
 import sys
 import os
 import json
-import requests
 from typing import List, Dict, Tuple
+from groq import Groq
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'ingestion'))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'processing'))
@@ -18,33 +18,37 @@ from chunking import chunk_text
 from vector_store import VectorStore
 
 class RAGPipeline:
-    def __init__(self, ollama_url="http://localhost:11434"):
+    def __init__(self, groq_api_key=None):
         """
-        Initialize RAG Pipeline with Ollama integration
+        Initialize RAG Pipeline with Groq API integration
         """
-        self.ollama_url = ollama_url
+        self.groq_api_key = groq_api_key or os.getenv('GROQ_API_KEY')
+        if not self.groq_api_key:
+            raise ValueError("GROQ_API_KEY not found. Set it as an environment variable.")
+        
+        self.client = Groq(api_key=self.groq_api_key)
         self.vector_store = VectorStore()
         self.papers = []
         self.chunks = []
         self.metadata = []
-        self.model = "mistral"  # Lightweight model for M2
+        self.model = "mixtral-8x7b-32768"  # Fast Groq model
         
-        # Check if Ollama is running
-        self._check_ollama()
+        # Check if Groq API is accessible
+        self._check_groq()
     
-    def _check_ollama(self):
-        """Check if Ollama is running"""
+    def _check_groq(self):
+        """Check if Groq API is accessible"""
         try:
-            response = requests.get(f"{self.ollama_url}/api/tags", timeout=2)
-            if response.status_code == 200:
-                print("✅ Ollama is running")
-                models = response.json().get('models', [])
-                print(f"Available models: {[m.get('name') for m in models]}")
-            else:
-                print("⚠️  Ollama might not be running properly")
+            # Simple test call
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": "Hello"}],
+                max_tokens=10
+            )
+            print("✅ Groq API is connected and working")
         except Exception as e:
-            print(f"❌ Ollama connection error: {e}")
-            print("   Make sure Ollama is running: ollama serve")
+            print(f"❌ Groq API error: {e}")
+            print("   Make sure GROQ_API_KEY is set correctly")
     
     def load_papers_from_json(self, json_file):
         """Load papers from a JSON file (for testing/demo)"""
@@ -112,8 +116,8 @@ class RAGPipeline:
     
     def generate_answer(self, query: str, context_chunks: List[Dict]) -> str:
         """
-        Generate answer using Ollama with retrieved context
-        Optimized prompt for faster inference on M2
+        Generate answer using Groq API with retrieved context
+        Fast cloud-native inference
         """
         # Prepare context
         context = "\n".join([
@@ -122,8 +126,8 @@ class RAGPipeline:
             for c in context_chunks
         ])
         
-        # Create optimized prompt for M2 (shorter for faster inference)
-        prompt = f"""Based on the following research papers, answer the question concisely.
+        # Create prompt for Groq
+        prompt = f"""Based on the following research papers, answer the question concisely and accurately.
 
 Papers:
 {context}
@@ -133,29 +137,22 @@ Question: {query}
 Answer:"""
         
         try:
-            print(f"🤖 Generating answer with Ollama (mistral)...")
-            response = requests.post(
-                f"{self.ollama_url}/api/generate",
-                json={
-                    "model": self.model,
-                    "prompt": prompt,
-                    "stream": False,
-                    "temperature": 0.7,
-                    "top_p": 0.9,
-                },
-                timeout=60  # Increased timeout for M2
+            print(f"🤖 Generating answer with Groq (mixtral-8x7b)...")
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=500,
+                temperature=0.7,
+                top_p=0.9
             )
             
-            if response.status_code == 200:
-                answer = response.json().get('response', '').strip()
-                return answer
-            else:
-                return "❌ Error generating answer from Ollama"
+            answer = response.choices[0].message.content.strip()
+            return answer
         
-        except requests.exceptions.Timeout:
-            return "⏱️  Ollama request timed out (M2 may need more time for large prompts)"
         except Exception as e:
-            return f"❌ Error: {str(e)}"
+            return f"❌ Error generating answer: {str(e)}"
     
     def detect_research_gaps(self, papers: List[Dict] = None) -> List[str]:
         """

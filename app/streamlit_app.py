@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
 Streamlit UI for AI Research Assistant
-Interactive dashboard - ANY TOPIC + Content Generation
+Interactive dashboard with Groq Cloud Integration
 """
 
 import streamlit as st
+import os
 
 # Set page config first
 st.set_page_config(
@@ -23,24 +24,25 @@ st.markdown("""
 
 # Title
 st.title("🔬 AI Research Assistant")
-st.markdown("**Any Research Topic • Original Content Generation • Low Plagiarism**")
+st.markdown("**Battery Innovation • Semantic Search • Fast Groq AI**")
 st.divider()
 
 # Sidebar
 with st.sidebar:
     st.title("⚙️ Configuration")
-    st.write("**System Version**: v1.0")
+    st.write("**System Version**: v3.0")
     st.write("**Status**: ✅ Ready")
     
+    # Check Groq API
     try:
-        import requests
-        response = requests.get("http://localhost:11434/api/tags", timeout=2)
-        if response.status_code == 200:
-            st.success("✅ Ollama: Connected")
+        from groq import Groq
+        groq_key = os.getenv('GROQ_API_KEY')
+        if groq_key:
+            st.success("✅ Groq API: Connected")
         else:
-            st.warning("⚠️ Ollama: Check connection")
+            st.warning("⚠️ Groq API: No API key found")
     except:
-        st.error("❌ Ollama: Not running")
+        st.error("❌ Groq API: Import error")
 
 # Tabs
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
