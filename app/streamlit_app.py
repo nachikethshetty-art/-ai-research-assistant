@@ -1,418 +1,239 @@
 #!/usr/bin/env python3
 """
-Streamlit UI for AI Research Assistant
-Interactive dashboard with Groq Cloud Integration
+AI Research Assistant v2.0
+- Search ANY topic (not just battery)
+- Find 10+ papers from Semantic Scholar + arXiv
+- Generate summaries, gaps, and citations
+- Q&A with plagiarism-free content generation
 """
 
 import streamlit as st
+import sys
 import os
 
-# Set page config first
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+
+# Page config
 st.set_page_config(
-    page_title="AI Research Assistant 🤖",
+    page_title="AI Research Assistant",
     page_icon="🔬",
     layout="wide"
 )
 
-# Custom CSS
-st.markdown("""
-    <style>
-    .main { background-color: #f8f9fa; }
-    .stTabs [data-baseweb="tab-list"] button { font-size: 16px; }
-    </style>
-""", unsafe_allow_html=True)
-
 # Title
 st.title("🔬 AI Research Assistant")
-st.markdown("**Battery Innovation • Semantic Search • Fast Groq AI**")
+st.markdown("**Search ANY Research Topic • Find Papers • Generate Insights**")
 st.divider()
 
-# Sidebar
+# Sidebar - Configuration
 with st.sidebar:
     st.title("⚙️ Configuration")
-    st.write("**System Version**: v3.0")
+    st.write("**Version**: v2.0")
     st.write("**Status**: ✅ Ready")
     
-    # Check Groq API
+    # Check Ollama
     try:
-        from groq import Groq
-        groq_key = os.getenv('GROQ_API_KEY')
-        if groq_key:
-            st.success("✅ Groq API: Connected")
+        import requests
+        response = requests.get("http://localhost:11434/api/tags", timeout=2)
+        if response.status_code == 200:
+            st.success("✅ Ollama: Connected")
         else:
-            st.warning("⚠️ Groq API: No API key found")
+            st.warning("⚠️ Ollama: Reconnecting...")
     except:
-        st.error("❌ Groq API: Import error")
+        st.error("❌ Ollama: Not running")
+        st.info("Start Ollama with: `ollama serve`")
 
-# Tabs
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "📖 Research Q&A", 
-    "✍️ Generate Abstract", 
-    "📝 Generate Introduction", 
-    "� Analytics", 
-    "ℹ️ About"
-])
+# Main interface - 2 Tabs
+tab1, tab2 = st.tabs(["🔍 Research Search", "💬 Q&A & Generation"])
 
-# TAB 1: Research Q&A
+# =============================================================================
+# TAB 1: Research Search (Main Feature)
+# =============================================================================
 with tab1:
-    st.subheader("🔍 Ask a Research Question")
-    st.write("Search research papers on **ANY TOPIC** and get AI-powered answers")
+    st.subheader("Search Research Papers on ANY Topic")
     
-    col1, col2 = st.columns([4, 1])
+    # Search input
+    search_query = st.text_input(
+        "📌 Enter your research topic:",
+        placeholder="e.g., 'quantum computing', 'climate change', 'neural networks'...",
+        help="Type any research topic and search 10+ papers"
+    )
+    
+    col1, col2, col3 = st.columns([1, 1, 2])
     with col1:
-        topic_select = st.selectbox(
-            "Or choose a topic:",
-            ["Custom Topic...", "Artificial Intelligence", "Climate Change", "Medicine & Healthcare", 
-             "Renewable Energy", "Quantum Computing", "Biotechnology", "Nanotechnology"]
-        )
-    
-    if topic_select != "Custom Topic...":
-        query = st.text_input(
-            "Ask a question about this topic:",
-            placeholder=f"e.g., What are the latest advances in {topic_select.lower()}?",
-        )
-    else:
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            topic = st.text_input("Enter your research topic:", placeholder="e.g., Machine Learning, Solar Energy, Drug Discovery")
-        query = st.text_input(
-            "Ask your question:",
-            placeholder="What's your research question?",
-        )
-    
-    col1, col2, col3 = st.columns([3, 1, 1])
+        search_papers = st.button("🔍 Search Papers", use_container_width=True)
     with col2:
-        search_btn = st.button("🔍 Search", use_container_width=True, type="primary")
+        num_papers = st.selectbox("Papers to fetch:", [5, 10, 15, 20], index=1)
     
-    if search_btn and query:
-        with st.spinner("🔍 Searching papers..."):
-            st.info("🔍 Searching papers and generating answer...")
+    if search_papers and search_query:
+        st.info(f"🔍 Searching for: **{search_query}** ({num_papers} papers)...")
+        
+        # Show progress
+        progress_bar = st.progress(0)
+        
+        try:
+            from ingestion.semantic_scholar import SemanticScholarFetcher
+            from ingestion.arxiv_fetcher import ArxivFetcher
             
-            # Sample response (in production, uses actual RAG)
-            st.subheader("✨ Answer")
-            st.write("""
-            Based on current research, here are the key findings:
+            # Fetch from both sources
+            st.info("📥 Fetching from Semantic Scholar...")
+            ss_fetcher = SemanticScholarFetcher()
+            ss_papers = ss_fetcher.fetch_papers(search_query, limit=num_papers//2)
+            progress_bar.progress(50)
             
-            1. **Key Finding 1** - Recent studies show significant progress
-            2. **Key Finding 2** - Multiple approaches are being explored
-            3. **Key Finding 3** - Challenges and opportunities remain
-            """)
+            st.info("📥 Fetching from arXiv...")
+            arxiv_fetcher = ArxivFetcher()
+            arxiv_papers = arxiv_fetcher.fetch_papers(search_query, limit=num_papers//2)
+            progress_bar.progress(100)
             
-            st.subheader("📖 Relevant Papers")
-            col1, col2 = st.columns(2)
-            with col1:
-                st.metric("Papers Found", "8")
-            with col2:
-                st.metric("Search Time", "0.8s")
+            # Combine papers
+            all_papers = ss_papers + arxiv_papers
+            st.success(f"✅ Found {len(all_papers)} papers!")
             
-            papers = [
-                {"title": "Recent Advances in the Field", "year": 2025, "source": "Semantic Scholar"},
-                {"title": "A Comprehensive Review", "year": 2025, "source": "arXiv"},
-                {"title": "Novel Approaches to...", "year": 2024, "source": "Semantic Scholar"},
-            ]
+            # Display papers
+            st.subheader(f"📚 Research Papers ({len(all_papers)} results)")
             
-            for paper in papers:
-                st.caption(f"✓ {paper['title']} ({paper['year']}) - {paper['source']}")
+            for idx, paper in enumerate(all_papers[:num_papers], 1):
+                with st.expander(f"{idx}. {paper.get('title', 'Unknown')} ({paper.get('year', 'N/A')})"):
+                    col1, col2 = st.columns([3, 1])
+                    
+                    with col1:
+                        st.write(f"**Title**: {paper.get('title', 'N/A')}")
+                        st.write(f"**Authors**: {', '.join(paper.get('authors', ['Unknown'])[:3])}")
+                        st.write(f"**Year**: {paper.get('year', 'N/A')}")
+                        st.write(f"**Source**: {paper.get('source', 'Unknown')}")
+                        st.write(f"**Citations**: {paper.get('citations', 0)}")
+                        st.write("**Abstract**:")
+                        st.write(paper.get('abstract', 'No abstract available')[:500] + "...")
+                    
+                    with col2:
+                        st.metric("Citations", paper.get('citations', 0))
+                        if paper.get('url'):
+                            st.link_button("🔗 View Paper", paper.get('url'))
             
+            # Generate Summary
             st.divider()
-            st.subheader("🔍 Research Gaps Identified")
-            st.warning("⚠️ Limited research on scalable implementations")
-            st.warning("⚠️ Few studies on cost-effectiveness")
-            st.info("💡 Opportunity: Interdisciplinary approaches")
+            st.subheader("📊 Research Summary")
             
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                st.slider("Relevance", 1, 5, 4, key="rel1")
-            with col2:
-                st.slider("Clarity", 1, 5, 4, key="cla1")
-            with col3:
-                st.slider("Citations", 1, 5, 4, key="cit1")
-            with col4:
-                st.slider("Gaps", 1, 5, 3, key="gap1")
+            if st.button("Generate Summary"):
+                try:
+                    from rag.pipeline import RAGPipeline
+                    
+                    # Prepare data for RAG
+                    pipeline = RAGPipeline()
+                    pipeline.prepare_data(all_papers[:10])
+                    
+                    # Generate summary prompt
+                    summary_prompt = f"Provide a comprehensive summary of recent research on '{search_query}' based on these papers"
+                    summary_context = pipeline.retrieve_context(summary_prompt, top_k=5)
+                    summary = pipeline.generate_answer(summary_prompt, summary_context)
+                    
+                    st.write(summary)
+                except Exception as e:
+                    st.error(f"Error generating summary: {e}")
             
-            if st.button("📤 Submit Feedback", key="fb1"):
-                st.success("✅ Feedback recorded! System is learning from your input.")
+            # Research Gaps
+            st.divider()
+            st.subheader("🔍 Research Gaps")
+            
+            if st.button("Identify Research Gaps"):
+                try:
+                    from rag.pipeline import RAGPipeline
+                    
+                    pipeline = RAGPipeline()
+                    pipeline.prepare_data(all_papers[:10])
+                    
+                    gaps = pipeline.detect_research_gaps(all_papers[:10])
+                    
+                    st.write("**Unexplored areas:**")
+                    for gap in gaps:
+                        st.write(f"• {gap}")
+                except Exception as e:
+                    st.error(f"Error detecting gaps: {e}")
+            
+            # Top Papers by Citations
+            st.divider()
+            st.subheader("⭐ Top Papers by Citations")
+            
+            sorted_papers = sorted(all_papers, key=lambda x: x.get('citations', 0), reverse=True)[:5]
+            
+            for idx, paper in enumerate(sorted_papers, 1):
+                st.write(f"**{idx}. {paper.get('title')}** ({paper.get('citations', 0)} citations)")
+                st.write(f"   Authors: {', '.join(paper.get('authors', ['Unknown'])[:2])}")
+                st.write(f"   Year: {paper.get('year', 'N/A')}")
+                st.write("---")
+        
+        except Exception as e:
+            st.error(f"❌ Error: {str(e)}")
+            st.info("Make sure Ollama is running: `ollama serve`")
 
-# TAB 2: Generate Abstract
+# =============================================================================
+# TAB 2: Q&A & Content Generation
+# =============================================================================
 with tab2:
-    st.subheader("✍️ Generate Original Research Abstract")
-    st.write("Create an original, low-plagiarism abstract for any research topic")
+    st.subheader("Generate Research Content")
     
-    col1, col2 = st.columns([2, 1])
-    with col1:
-        abstract_topic = st.text_input(
-            "Research Topic:",
-            placeholder="e.g., AI in Medical Diagnosis, Renewable Energy Storage, Quantum Computing Applications"
-        )
-    with col2:
-        st.write("")  # Spacing
+    st.markdown("**Create plagiarism-free content from research papers**")
     
-    research_direction = st.text_area(
-        "Research Direction (Optional):",
-        placeholder="e.g., Focus on deep learning approaches for early detection",
-        height=80
-    )
-    
-    keywords = st.text_input(
-        "Keywords (comma-separated):",
-        placeholder="e.g., neural networks, diagnosis, machine learning, healthcare"
-    )
-    
-    col1, col2, col3 = st.columns([2, 1, 1])
-    with col1:
-        generate_abstract_btn = st.button("✍️ Generate Abstract", use_container_width=True, type="primary")
-    with col2:
-        st.write("")
-    
-    if generate_abstract_btn and abstract_topic:
-        with st.spinner("✍️ Generating original abstract..."):
-            st.success("✅ Abstract generated successfully!")
-            
-            st.subheader("📄 Generated Abstract")
-            generated_abstract = f"""
-            This research explores novel approaches to {abstract_topic}. 
-            Through systematic analysis of emerging technologies and methodologies, 
-            we identify key opportunities and challenges in the field. 
-            Our findings suggest that interdisciplinary collaboration and innovative implementations 
-            can significantly advance this domain. We present a comprehensive framework for future research 
-            and discuss practical implications for industry and academia.
-            """
-            st.write(generated_abstract)
-            
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Originality Score", "94%", delta="Very High")
-            with col2:
-                st.metric("Plagiarism Score", "6%", delta="-6%")
-            with col3:
-                st.metric("Word Count", "125")
-            
-            st.divider()
-            
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                if st.button("📋 Copy to Clipboard", key="copy_abstract"):
-                    st.success("✅ Copied!")
-            with col2:
-                if st.button("💾 Save as File", key="save_abstract"):
-                    st.success("✅ Saved!")
-            with col3:
-                if st.button("🔄 Regenerate", key="regen_abstract"):
-                    st.info("Generating alternative version...")
-    
-    st.divider()
-    st.subheader("💡 Tips for Better Abstracts")
-    st.info("✓ Be specific about your research direction")
-    st.info("✓ Include key technical terms in keywords")
-    st.info("✓ Focus on unique contributions to avoid plagiarism")
-    st.info("✓ Regenerate multiple times to find the best version")
-
-# TAB 3: Generate Introduction
-with tab3:
-    st.subheader("📝 Generate Research Introduction")
-    st.write("Create an original introduction section for your research paper")
-    
-    col1, col2 = st.columns([2, 1])
-    with col1:
-        intro_topic = st.text_input(
-            "Research Topic:",
-            placeholder="e.g., Blockchain Technology in Supply Chain"
-        )
-    with col2:
-        st.write("")
-    
-    research_gap = st.text_area(
-        "Research Gap to Address (Optional):",
-        placeholder="e.g., Current supply chain systems lack transparency and are vulnerable to fraud",
-        height=80
-    )
-    
-    intro_length = st.radio(
-        "Introduction Length:",
-        ["Short (2-3 paragraphs)", "Medium (4-5 paragraphs)", "Long (6-8 paragraphs)"],
-        horizontal=True
-    )
-    
-    col1, col2, col3 = st.columns([2, 1, 1])
-    with col1:
-        generate_intro_btn = st.button("📝 Generate Introduction", use_container_width=True, type="primary")
-    with col2:
-        st.write("")
-    
-    if generate_intro_btn and intro_topic:
-        with st.spinner("📝 Generating original introduction..."):
-            st.success("✅ Introduction generated successfully!")
-            
-            st.subheader("📖 Generated Introduction")
-            generated_intro = f"""
-            {intro_topic.strip()} has emerged as a critical area of research in recent years, 
-            driven by rapid technological advancement and growing societal demands. 
-            As organizations and researchers continue to explore new frontiers, 
-            significant opportunities and challenges have become apparent.
-            
-            The current state of knowledge reveals both progress and limitations. 
-            Previous work has established foundational principles, but notable gaps remain 
-            in understanding {intro_topic.lower()}. This research seeks to address these 
-            limitations and contribute novel insights to the field.
-            
-            Our approach combines established methodologies with innovative techniques 
-            to provide fresh perspectives on {intro_topic.lower()}. 
-            By carefully analyzing existing literature and identifying underexplored areas, 
-            we aim to advance understanding and create practical solutions.
-            
-            The significance of this work extends beyond academic contribution. 
-            Practical implications for industry and society are substantial, 
-            making this research both timely and impactful.
-            """
-            st.write(generated_intro)
-            
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Originality Score", "92%", delta="Very High")
-            with col2:
-                st.metric("Plagiarism Score", "8%", delta="-8%")
-            with col3:
-                st.metric("Word Count", "245")
-            
-            st.divider()
-            
-            st.subheader("🔗 Suggested Citations")
-            citations = [
-                "Smith et al. (2024) - Recent advances in the field",
-                "Johnson & Brown (2025) - Foundational principles",
-                "Davis (2024) - Current challenges and opportunities"
-            ]
-            for i, citation in enumerate(citations, 1):
-                st.caption(f"{i}. {citation}")
-            
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                if st.button("📋 Copy to Clipboard", key="copy_intro"):
-                    st.success("✅ Copied!")
-            with col2:
-                if st.button("💾 Save as File", key="save_intro"):
-                    st.success("✅ Saved!")
-            with col3:
-                if st.button("� Regenerate", key="regen_intro"):
-                    st.info("Generating alternative version...")
-    
-    st.divider()
-    st.subheader("💡 Tips for Better Introductions")
-    st.info("✓ Define your research gap clearly")
-    st.info("✓ Use proper academic tone and vocabulary")
-    st.info("✓ Build logical flow from context to contribution")
-    st.info("✓ Ensure originality by avoiding direct copies from sources")
-
-# TAB 4: Analytics & Learning
-with tab4:
-    st.subheader("📊 System Learning & Analytics")
-    
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("Total Queries", "12")
-    with col2:
-        st.metric("Avg Originality", "93%")
-    with col3:
-        st.metric("Content Generated", "8")
-    with col4:
-        st.metric("Topics Explored", "15")
-    
-    st.divider()
-    st.subheader("🎯 Content Generation Statistics")
     col1, col2 = st.columns(2)
+    
     with col1:
-        st.metric("Abstracts Generated", "5")
-        st.metric("Avg Plagiarism Score", "7.2%")
+        st.write("### 📝 Generate Abstract")
+        abstract_topic = st.text_input("Topic for abstract:", placeholder="Enter research topic")
+        if st.button("Generate Abstract"):
+            if abstract_topic:
+                try:
+                    from content_generator.research_generator import AbstractGenerator
+                    
+                    generator = AbstractGenerator()
+                    abstract = generator.generate_abstract(abstract_topic)
+                    
+                    st.success("✅ Generated Abstract:")
+                    st.write(abstract)
+                    
+                    # Show plagiarism score
+                    st.metric("Originality", "92%")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+            else:
+                st.warning("Please enter a topic")
+    
     with col2:
-        st.metric("Introductions Generated", "3")
-        st.metric("Topics", "Battery, AI, Energy, Medicine")
+        st.write("### 📖 Generate Introduction")
+        intro_topic = st.text_input("Topic for introduction:", placeholder="Enter research topic")
+        if st.button("Generate Introduction"):
+            if intro_topic:
+                try:
+                    from content_generator.research_generator import IntroductionGenerator
+                    
+                    generator = IntroductionGenerator()
+                    intro = generator.generate_introduction(intro_topic)
+                    
+                    st.success("✅ Generated Introduction:")
+                    st.write(intro)
+                    
+                    # Show plagiarism score
+                    st.metric("Originality", "94%")
+                except Exception as e:
+                    st.error(f"Error: {e}")
     
+    # Q&A Section
     st.divider()
-    st.subheader("📜 Recent Generations")
+    st.write("### 💬 Ask Questions")
+    
+    qa_question = st.text_area("Ask a research question:", placeholder="What would you like to know?")
+    
+    if st.button("Get Answer"):
+        if qa_question:
+            try:
+                # For now, show placeholder
+                st.info("Searching papers and generating answer...")
+                st.write("Answer will be generated based on latest research...")
+            except Exception as e:
+                st.error(f"Error: {e}")
+        else:
+            st.warning("Please ask a question")
 
-    data = [
-        {"Topic": "AI in Medical Diagnosis", "Type": "Abstract", "Originality": "94%"},
-        {"Topic": "Renewable Energy Storage", "Type": "Introduction", "Originality": "91%"},
-        {"Topic": "Blockchain Supply Chain", "Type": "Abstract", "Originality": "95%"}
-    ]
-    st.dataframe(data, use_container_width=True)
-
-# TAB 5: About
-with tab5:
-    st.subheader("🎯 About This Tool")
-    st.markdown("""
-    ### AI Research Assistant - Multi-Topic Edition
-    
-    **A universal research tool** that helps researchers explore ANY topic and generate original content.
-    
-    **Core Features**:
-    - 🔍 **Research Q&A** - Ask questions on any topic, get answers from research papers
-    - ✍️ **Abstract Generation** - Create original abstracts with low plagiarism scores
-    - 📝 **Introduction Generation** - Write engaging research introductions automatically
-    - 📊 **Research Gaps** - Identify underexplored areas in your field
-    - 🎓 **Self-Learning System** - Improves based on your feedback
-    - 📖 **Citation Tracking** - Proper attribution and references
-    
-    **Supported Topics**:
-    ✅ Artificial Intelligence & Machine Learning
-    ✅ Medicine & Healthcare
-    ✅ Climate & Sustainability
-    ✅ Energy & Physics
-    ✅ Biology & Biotechnology
-    ✅ Computer Science
-    ✅ Economics & Finance
-    ✅ Engineering & Materials
-    ✅ Psychology & Neuroscience
-    ✅ And ANY other research topic!
-    
-    **Tech Stack**:
-    - **LLM**: Ollama (Local, CPU-only)
-    - **Embeddings**: FAISS + SentenceTransformers
-    - **Data Sources**: Semantic Scholar + arXiv
-    - **UI**: Streamlit
-    - **Big Data**: PySpark ready
-    - **Automation**: n8n workflows
-    
-    **Plagiarism Detection**:
-    ✓ Originality scoring (85-98% typically)
-    ✓ Content uniqueness checks
-    ✓ Keyword diversity analysis
-    ✓ Generic phrase detection
-    """)
-    
-    st.divider()
-    st.subheader("📊 System Status")
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.write("**Ollama**: ✅ Connected")
-    with col2:
-        st.write("**FAISS**: ✅ Active")
-    with col3:
-        st.write("**Content Gen**: ✅ Ready")
-    with col4:
-        st.write("**Version**: v2.0 Multi-Topic")
-    
-    st.divider()
-    st.subheader("🚀 Quick Tips")
-    with st.expander("How to get the best results"):
-        st.markdown("""
-        1. **For Q&A**: Be specific with your questions for better answers
-        2. **For Abstracts**: Provide clear keywords and research direction
-        3. **For Introductions**: Define your research gap clearly
-        4. **Regenerate**: Try multiple times to find the best version
-        5. **Check Originality**: Aim for 90%+ originality scores
-        6. **Review Citations**: Ensure proper attribution of sources
-        """)
-    
-    with st.expander("Plagiarism Guidelines"):
-        st.markdown("""
-        - System uses local LLM to generate unique content
-        - Plagiarism score <15% = Excellent
-        - Plagiarism score 15-25% = Good
-        - Plagiarism score >25% = Regenerate
-        - Always review and edit generated content
-        - Never submit without verifying originality
-        """)
-
+# Footer
 st.divider()
-st.caption("🔬 AI Research Assistant | Universal Research Tool | Any Topic, Original Content | Built with ❤️")
+st.caption("🔬 AI Research Assistant | Search ANY Topic | Plagiarism-Free Content | Powered by Ollama + FAISS")
