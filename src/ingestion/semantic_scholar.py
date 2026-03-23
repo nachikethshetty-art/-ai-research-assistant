@@ -1,35 +1,53 @@
 import requests
+import time
+import json
 
 def fetch_semantic_scholar(query, limit=10):
+    """
+    Fetch papers from Semantic Scholar API
+    Note: Free API has strict rate limits. Gracefully falls back to arXiv if limited.
+    """
     url = "https://api.semanticscholar.org/graph/v1/paper/search"
 
     params = {
         "query": query,
-        "limit": limit,
-        "fields": "title,abstract,year,citationCount,authors"
+        "limit": min(limit, 50),
+        "fields": "title,abstract,year,citationCount,authors,paperId"
+    }
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (compatible; ResearchBot/1.0)"
     }
 
     try:
-        response = requests.get(url, params=params, timeout=10)
+        time.sleep(1)
+        response = requests.get(url, params=params, headers=headers, timeout=10)
 
+        if response.status_code == 429:
+            return []  # Rate limited - fall back to arXiv
+        if response.status_code == 403:
+            return []  # Forbidden - API issue
         if response.status_code != 200:
-            print("Semantic Scholar error:", response.status_code)
             return []
 
         data = response.json()
-
         papers = []
+        
         for p in data.get("data", []):
+            if not p.get("abstract"):
+                continue
+            
             papers.append({
                 "source": "semantic_scholar",
-                "title": p.get("title"),
-                "abstract": p.get("abstract"),
-                "year": p.get("year"),
-                "citations": p.get("citationCount"),
-                "authors": [a["name"] for a in p.get("authors", [])]
+                "title": p.get("title", "Unknown"),
+                "abstract": p.get("abstract", ""),
+                "year": p.get("year", "Unknown"),
+                "citations": p.get("citationCount", 0),
+                "authors": [a.get("name", "Unknown") for a in p.get("authors", [])],
+                "url": f"https://semanticscholar.org/paper/{p.get('paperId')}" if p.get('paperId') else None
             })
 
-        return papers
-    except Exception as e:
-        print(f"Semantic Scholar fetch error: {e}")
-        return []
+        return papers[:limit]
+        
+    except:
+        return []  # Fail silently - arXiv will be used as fallback
