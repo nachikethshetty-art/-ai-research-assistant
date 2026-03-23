@@ -1,0 +1,107 @@
+{
+  "history": [
+    {
+      "timestamp": "2026-03-23T12:45:39.783160",
+      "session_id": "20260323_124539",
+      "query": "What are battery recycling methods?",
+      "answer_preview": "Battery recycling involves multiple approaches...",
+      "feedback": {
+        "relevance": 5,
+        "clarity": 4,
+        "citations": 4,
+        "gaps": 3
+      },
+      "reward": 0.8,
+      "current_weights": {
+        "relevance": 0.25,
+        "clarity": 0.25,
+        "citation_quality": 0.25,
+        "gap_detection": 0.25
+      }
+    },
+    {
+      "timestamp": "2026-03-23T12:45:39.783372",
+      "session_id": "20260323_124539",
+      "query": "How does sustainability affect battery production?",
+      "answer_preview": "Sustainability in battery production encompasses...",
+      "feedback": {
+        "relevance": 4,
+        "clarity": 5,
+        "citations": 5,
+        "gaps": 4
+      },
+      "reward": 0.22499999999999998,
+      "current_weights": {
+        "relevance": 0.25,
+        "clarity": 0.25,
+        "citation_quality": 0.25,
+        "gap_detection": 0.25
+      }
+    },
+    {
+      "timestamp": "2026-03-23T12:45:39.783503",
+      "session_id": "20260323_124539",
+      "query": "What are the economic implications?",
+      "answer_preview": "The economics of battery recycling show...",
+      "feedback": {
+        "relevance": 3,
+        "clarity": 3,
+        "citations": 2,
+        "gaps": 2
+      },
+      "reward": 0.125,
+      "current_weights": {
+        "relevance": 0.25,
+        "clarity": 0.25,
+        "citation_quality": 0.25,
+        "gap_detection": 0.25
+      }
+    },
+    {
+      "timestamp": "2026-03-23T12:51:04.453777",
+      "session_id": "20260323_125104",
+      "query": "Test query",
+      "answer_preview": "Test answer",
+      "feedback": {
+        "relevance": 5,
+        "clarity": 4,
+        "citations": 5,
+        "gaps": 4
+      },
+      "reward": 0.22499999999999998,
+      "current_weights": {
+        "relevance": 0.25,
+        "clarity": 0.25,
+        "citation_quality": 0.25,
+        "gap_detection": 0.25
+      }
+    },
+    {
+      "timestamp": "2026-03-23T12:53:42.591306",
+      "session_id": "20260323_125342",
+      "query": "Test query",
+      "answer_preview": "Test answer",
+      "feedback": {
+        "relevance": 5,
+        "clarity": 4,
+        "citations": 5,
+        "gaps": 4
+      },
+      "reward": 0.22499999999999998,
+      "current_weights": {
+        "relevance": 0.25,
+        "clarity": 0.25,
+        "citation_quality": 0.25,
+        "gap_detection": 0.25
+      }
+    }
+  ],
+  "weights": {
+    "relevance": 0.25,
+    "clarity": 0.25,
+    "citation_quality": 0.25,
+    "gap_detection": 0.25
+  },
+  "total_queries": 5,
+  "average_reward": 0.045
+}

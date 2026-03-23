@@ -1,0 +1,168 @@
+{
+  "name": "AI Research Assistant - Paper Fetching Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "triggerType": "interval",
+        "unit": "hours",
+        "value": 24
+      },
+      "name": "Trigger - Daily Update",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/fetch_papers",
+        "method": "POST",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "lithium-ion battery recycling sustainability"
+            },
+            {
+              "name": "limit",
+              "value": "20"
+            }
+          ]
+        }
+      },
+      "name": "Fetch Papers - Semantic Scholar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [500, 200]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/fetch_arxiv",
+        "method": "POST",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "lithium-ion battery recycling"
+            },
+            {
+              "name": "max_results",
+              "value": "20"
+            }
+          ]
+        }
+      },
+      "name": "Fetch Papers - arXiv",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [500, 400]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/process_papers",
+        "method": "POST",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "papers",
+              "value": "= $('Fetch Papers - Semantic Scholar').data.papers.concat($('Fetch Papers - arXiv').data.papers)"
+            }
+          ]
+        }
+      },
+      "name": "Process & Embed Papers",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "url": "= 'postgresql://localhost:5432/research_db'",
+        "operation": "insert",
+        "table": "papers",
+        "columns": "title, abstract, source, year, citations, created_at"
+      },
+      "name": "Save to Database",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {
+        "message": "✅ Successfully fetched and processed papers",
+        "details": "= { total_papers: $('Process & Embed Papers').data.count, timestamp: new Date().toISOString() }"
+      },
+      "name": "Send Notification",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 3.0,
+      "position": [1250, 300]
+    }
+  ],
+  "connections": {
+    "Trigger - Daily Update": {
+      "main": [
+        [
+          {
+            "node": "Fetch Papers - Semantic Scholar",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Papers - arXiv",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Papers - Semantic Scholar": {
+      "main": [
+        [
+          {
+            "node": "Process & Embed Papers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Papers - arXiv": {
+      "main": [
+        [
+          {
+            "node": "Process & Embed Papers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process & Embed Papers": {
+      "main": [
+        [
+          {
+            "node": "Save to Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Database": {
+      "main": [
+        [
+          {
+            "node": "Send Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "saveManualRuns": true,
+    "timezone": "America/New_York"
+  },
+  "versionId": "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6"
+}
