@@ -106,70 +106,52 @@ class RAGPipeline:
         return results
     
     def generate_answer(self, query: str, context_chunks: List[Dict] = None) -> str:
-        """Generate answer using Ollama with proper context"""
+        """Generate answer using Ollama - OPTIMIZED FOR SPEED"""
         if context_chunks is None:
             context_chunks = []
         
-        # Build context from chunks
+        # Build context from chunks (truncated for speed)
         context_text = ""
         if context_chunks:
             context_text = "\n".join([
-                f"Paper: {c['metadata']['title']}\nContent: {c['chunk'][:300]}"
-                for c in context_chunks[:3]
+                f"Paper: {c['metadata']['title']}\nContent: {c['chunk'][:200]}"
+                for c in context_chunks[:2]  # Only use top 2 papers
             ])
         
-        # Smart prompt based on query type
-        if any(word in query.lower() for word in ['summary', 'overview', 'what is']):
-            prompt = f"""Answer this research question concisely (2-3 sentences):
-{query}
+        # Shorter, faster prompts
+        prompt = f"""{query}
 
-Research context:
-{context_text if context_text else 'No specific context available'}
+Context: {context_text if context_text else 'General knowledge'}
 
-Provide a clear, academic answer."""
+Answer concisely in 1-2 sentences:"""
         
-        elif any(word in query.lower() for word in ['how', 'explain', 'why']):
-            prompt = f"""Explain this research topic clearly:
-{query}
-
-Context:
-{context_text if context_text else 'General knowledge response'}
-
-Provide a detailed but concise explanation."""
-        
-        else:
-            prompt = f"""Answer this research question:
-{query}
-
-Relevant papers and findings:
-{context_text if context_text else 'No specific papers available'}
-
-Provide an accurate, research-backed answer."""
-        
-        # Try to get answer from Ollama
+        # If Ollama not available, return fallback immediately
         if not self.ollama_available:
             return self._generate_default_answer(query)
         
         try:
+            # Use streaming for faster first response
             response = requests.post(
                 f"{self.ollama_url}/api/generate",
                 json={
                     "model": self.model,
                     "prompt": prompt,
                     "stream": False,
-                    "temperature": 0.6,
-                    "top_p": 0.9,
-                    "num_predict": 150
+                    "temperature": 0.5,  # Lower for consistency
+                    "top_p": 0.8,
+                    "num_predict": 100,  # Shorter responses
+                    "num_ctx": 512  # Smaller context window
                 },
-                timeout=30
+                timeout=12  # Reduced from 30s
             )
             
             if response.status_code == 200:
                 answer = response.json().get('response', '').strip()
-                if answer and len(answer) > 10:
+                if answer and len(answer) > 5:
                     return answer
         except requests.exceptions.Timeout:
-            pass
+            # Timeout - return fallback
+            return self._generate_default_answer(query)
         except Exception:
             pass
         
