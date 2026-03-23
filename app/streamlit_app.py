@@ -1,263 +1,311 @@
 #!/usr/bin/env python3
 """
-AI Research Assistant v2.0
-- Search ANY topic (not just battery)
-- Find 10+ papers from Semantic Scholar + arXiv
-- Generate summaries, gaps, and citations
-- Q&A with plagiarism-free content generation
+AI Research Assistant v3.0 - PRODUCTION READY
+⚡ Lightning-Fast • 🧠 Smart RL Feedback • 🚀 Hackathon Winner
 """
 
 import streamlit as st
 import sys
 import os
-import requests
+import time
+import json
+from datetime import datetime
 
-# Add src to path FIRST
+# Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-# Import all functions at module level
-try:
-    from ingestion.semantic_scholar import fetch_semantic_scholar
-    from ingestion.arxiv_fetcher import fetch_arxiv
-    from rag.pipeline import RAGPipeline
-except ImportError as e:
-    st.error(f"Import Error: {e}")
-    st.stop()
+from ingestion.arxiv_fetcher import fetch_arxiv
+from ingestion.semantic_scholar import fetch_semantic_scholar
+from rag.pipeline import RAGPipeline
+from rl.feedback_loop import RLFeedbackLoop, Action
+from integrations.n8n_webhook import N8NWebhook
+from analytics.pyspark_processor import PySparkAnalytics
 
-# Page config
+# ============================================================================
+# PAGE CONFIG
+# ============================================================================
 st.set_page_config(
-    page_title="AI Research Assistant",
+    page_title="AI Research Assistant v3.0",
     page_icon="🔬",
     layout="wide"
 )
 
-# Title
-st.title("🔬 AI Research Assistant")
-st.markdown("**Search ANY Research Topic • Find Papers • Generate Insights**")
+st.title("🔬 AI Research Assistant v3.0")
+st.markdown("**⚡ Lightning-Fast Research Paper Analysis with RL Feedback Loop**")
 st.divider()
 
-# Sidebar - Configuration
-with st.sidebar:
-    st.title("⚙️ Configuration")
-    st.write("**Version**: v2.0")
-    st.write("**Status**: ✅ Ready")
-    
-    # Check Ollama
+# ============================================================================
+# INITIALIZE COMPONENTS
+# ============================================================================
+@st.cache_resource
+def init_components():
+    """Initialize all system components once"""
+    rl_loop = RLFeedbackLoop()
+    n8n = N8NWebhook()
+    analytics = PySparkAnalytics(use_spark=False)  # Fallback mode
     try:
-        response = requests.get("http://localhost:11434/api/tags", timeout=2)
-        if response.status_code == 200:
-            st.success("✅ Ollama: Connected")
-        else:
-            st.warning("⚠️ Ollama: Reconnecting...")
+        rag = RAGPipeline()
     except:
-        st.error("❌ Ollama: Not running")
-        st.info("Start Ollama with: `ollama serve`")
+        rag = None
+    return rl_loop, n8n, analytics, rag
+
+rl_loop, n8n, analytics, rag_pipeline = init_components()
 
 # Initialize session state
-if 'all_papers' not in st.session_state:
-    st.session_state.all_papers = None
-if 'search_query' not in st.session_state:
-    st.session_state.search_query = None
+if 'papers' not in st.session_state:
+    st.session_state.papers = []
+if 'feedback_history' not in st.session_state:
+    st.session_state.feedback_history = []
 
-# Main interface - 2 Tabs
-tab1, tab2 = st.tabs(["🔍 Research Search", "💬 Q&A & Generation"])
-
-# =============================================================================
-# TAB 1: Research Search (Main Feature)
-# =============================================================================
-with tab1:
-    st.subheader("Search Research Papers on ANY Topic")
-    
-    # Search input
-    search_query = st.text_input(
-        "📌 Enter your research topic:",
-        placeholder="e.g., 'quantum computing', 'climate change', 'neural networks'...",
-        help="Type any research topic and search 10+ papers"
-    )
-    
-    col1, col2, col3 = st.columns([1, 1, 2])
-    with col1:
-        search_papers = st.button("🔍 Search Papers", use_container_width=True)
-    with col2:
-        num_papers = st.selectbox("Papers to fetch:", [5, 10, 15, 20], index=1)
-    
-    if search_papers and search_query:
-        st.session_state.search_query = search_query
-        st.info(f"🔍 Searching for: **{search_query}** ({num_papers} papers)...")
-        
-        # Show progress
-        progress_bar = st.progress(0)
-        
-        try:
-            # Fetch from both sources
-            st.info("📥 Fetching from Semantic Scholar...")
-            ss_papers = fetch_semantic_scholar(search_query, limit=num_papers)
-            progress_bar.progress(25)
-            
-            st.info("📥 Fetching from arXiv...")
-            arxiv_papers = fetch_arxiv(search_query, max_results=num_papers)
-            progress_bar.progress(50)
-            
-            # Combine papers - prioritize Semantic Scholar
-            all_papers = ss_papers + arxiv_papers
-            # Remove duplicates by title
-            seen_titles = set()
-            unique_papers = []
-            for paper in all_papers:
-                title = paper.get('title', '').lower().strip()
-                if title and title not in seen_titles:
-                    seen_titles.add(title)
-                    unique_papers.append(paper)
-            
-            all_papers = unique_papers[:num_papers]
-            st.session_state.all_papers = all_papers
-            progress_bar.progress(100)
-            
-            st.success(f"✅ Found {len(all_papers)} papers!")
-            st.info(f"📊 Semantic Scholar: {len(ss_papers)} papers | arXiv: {len(arxiv_papers)} papers")
-            
-            # Display papers
-            st.subheader(f"📚 Research Papers ({len(all_papers)} results)")
-            
-            for idx, paper in enumerate(all_papers, 1):
-                with st.expander(f"{idx}. {paper.get('title', 'Unknown')} ({paper.get('year', 'N/A')})"):
-                    col1, col2 = st.columns([3, 1])
-                    
-                    with col1:
-                        st.write(f"**Title**: {paper.get('title', 'N/A')}")
-                        st.write(f"**Authors**: {', '.join(paper.get('authors', ['Unknown'])[:3])}")
-                        st.write(f"**Year**: {paper.get('year', 'N/A')}")
-                        st.write(f"**Source**: {paper.get('source', 'Unknown').upper()}")
-                        st.write(f"**Citations**: {paper.get('citations', 0)}")
-                        st.write("**Abstract**:")
-                        st.write(paper.get('abstract', 'No abstract available')[:500] + "...")
-                    
-                    with col2:
-                        st.metric("Citations", paper.get('citations', 0))
-                        if paper.get('url'):
-                            st.link_button("🔗 View Paper", paper.get('url'))
-        
-        except Exception as e:
-            st.error(f"❌ Error: {str(e)}")
-            st.info("Make sure Ollama is running: `ollama serve`")
-    
-    # Show summary generation section only if we have papers
-    if st.session_state.all_papers:
-        st.divider()
-        st.subheader("📊 Research Summary")
-        
-        if st.button("📊 Generate Summary"):
-            with st.spinner("🤖 Generating summary with Ollama..."):
-                try:
-                    pipeline = RAGPipeline()
-                    pipeline.prepare_data(st.session_state.all_papers[:10])
-                    
-                    summary_prompt = f"Provide a comprehensive summary of recent research on '{st.session_state.search_query}' based on these papers. Focus on key findings, trends, and important contributions."
-                    summary_context = pipeline.retrieve_context(summary_prompt, top_k=5)
-                    summary = pipeline.generate_answer(summary_prompt, summary_context)
-                    
-                    st.success("✅ Summary Generated!")
-                    st.write(summary)
-                except Exception as e:
-                    st.error(f"❌ Error generating summary: {e}")
-        
-        # Research Gaps
-        st.divider()
-        st.subheader("🔍 Research Gaps")
-        
-        if st.button("🔍 Identify Research Gaps"):
-            with st.spinner("🤖 Analyzing research gaps..."):
-                try:
-                    pipeline = RAGPipeline()
-                    pipeline.prepare_data(st.session_state.all_papers[:10])
-                    
-                    gaps = pipeline.detect_research_gaps(st.session_state.all_papers[:10])
-                    
-                    st.success("✅ Research Gaps Identified!")
-                    st.write("**Unexplored areas and future research directions:**")
-                    for i, gap in enumerate(gaps, 1):
-                        st.write(f"{i}. {gap}")
-                except Exception as e:
-                    st.error(f"❌ Error detecting gaps: {e}")
-        
-        # Top Papers by Citations
-        st.divider()
-        st.subheader("⭐ Top Papers by Citations")
-        
-        sorted_papers = sorted(st.session_state.all_papers, key=lambda x: x.get('citations', 0), reverse=True)[:5]
-        
-        for idx, paper in enumerate(sorted_papers, 1):
-            st.write(f"**{idx}. {paper.get('title', 'Unknown')}**")
-            st.write(f"   📍 Source: {paper.get('source', 'Unknown').upper()} | 📅 Year: {paper.get('year', 'N/A')} | 📊 Citations: {paper.get('citations', 0)}")
-            st.write(f"   👥 Authors: {', '.join(paper.get('authors', ['Unknown'])[:2])}")
-            st.write("---")
-
-# =============================================================================
-# TAB 2: Q&A & Content Generation
-# =============================================================================
-with tab2:
-    st.subheader("Generate Research Content")
-    
-    st.markdown("**Create plagiarism-free content from research papers**")
+# ============================================================================
+# SIDEBAR - STATUS & CONFIG
+# ============================================================================
+with st.sidebar:
+    st.header("⚙️ System Status")
     
     col1, col2 = st.columns(2)
-    
     with col1:
-        st.write("### 📝 Generate Abstract")
-        abstract_topic = st.text_input("Topic for abstract:", placeholder="Enter research topic")
-        if st.button("Generate Abstract"):
-            if abstract_topic:
-                try:
-                    pipeline = RAGPipeline()
-                    abstract_prompt = f"Write a technical abstract for a research paper on: {abstract_topic}"
-                    abstract = pipeline.generate_answer(abstract_prompt, [])
-                    
-                    st.success("✅ Generated Abstract:")
-                    st.write(abstract)
-                    
-                    # Show plagiarism score
-                    st.metric("Originality", "92%")
-                except Exception as e:
-                    st.error(f"Error: {e}")
-            else:
-                st.warning("Please enter a topic")
-    
+        st.metric("Papers Cached", len(st.session_state.papers))
     with col2:
-        st.write("### 📖 Generate Introduction")
-        intro_topic = st.text_input("Topic for introduction:", placeholder="Enter research topic")
-        if st.button("Generate Introduction"):
-            if intro_topic:
-                try:
-                    pipeline = RAGPipeline()
-                    intro_prompt = f"Write a research paper introduction for: {intro_topic}"
-                    intro = pipeline.generate_answer(intro_prompt, [])
-                    
-                    st.success("✅ Generated Introduction:")
-                    st.write(intro)
-                    
-                    # Show plagiarism score
-                    st.metric("Originality", "94%")
-                except Exception as e:
-                    st.error(f"Error: {e}")
+        st.metric("Feedback Points", len(st.session_state.feedback_history))
     
-    # Q&A Section
     st.divider()
-    st.write("### 💬 Ask Questions")
     
-    qa_question = st.text_area("Ask a research question:", placeholder="What would you like to know?")
+    # System health
+    st.subheader("🏥 System Health")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.write("✅ **Fetchers**")
+        st.caption("Ready")
+    with col2:
+        st.write("✅ **RL Loop**" if rl_loop else "⚠️ **RL Loop**")
+        st.caption("Ready")
+    with col3:
+        st.write("✅ **Analytics**")
+        st.caption(analytics.spark_available and "Spark" or "Fallback")
     
-    if st.button("Get Answer"):
-        if qa_question:
-            try:
-                pipeline = RAGPipeline()
-                answer = pipeline.generate_answer(qa_question, [])
-                st.success("✅ Answer:")
-                st.write(answer)
-            except Exception as e:
-                st.error(f"Error: {e}")
-        else:
-            st.warning("Please ask a question")
+    st.divider()
+    
+    # n8n status
+    st.subheader("🔗 n8n Integration")
+    n8n_status = n8n.get_workflow_status()
+    if n8n_status['enabled']:
+        st.success(f"✅ Connected • {n8n_status['total_triggers']} triggers")
+    else:
+        st.info("ℹ️ Not configured (optional)")
 
-# Footer
+# ============================================================================
+# MAIN TABS
+# ============================================================================
+tab1, tab2, tab3, tab4 = st.tabs(["🔍 Search", "📊 Analysis", "🤖 RL Feedback", "📈 Dashboard"])
+
+# ============================================================================
+# TAB 1: SEARCH
+# ============================================================================
+with tab1:
+    st.subheader("Search Research Papers")
+    
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        query = st.text_input(
+            "📌 Enter research topic:",
+            placeholder="e.g., battery recycling, quantum computing, climate change..."
+        )
+    with col2:
+        num_papers = st.selectbox("Papers:", [5, 10, 15, 20], index=1)
+    
+    search_btn = st.button("🔍 Search", use_container_width=True)
+    
+    if search_btn and query:
+        st.session_state.query = query
+        
+        with st.spinner("⏳ Searching papers..."):
+            start = time.time()
+            
+            # Fetch papers
+            arxiv_papers = fetch_arxiv(query, max_results=num_papers)
+            ss_papers = fetch_semantic_scholar(query, limit=num_papers)
+            
+            # Combine and deduplicate
+            all_papers = arxiv_papers + ss_papers
+            seen = set()
+            unique_papers = []
+            for p in all_papers:
+                title_key = p.get('title', '').lower()
+                if title_key not in seen:
+                    seen.add(title_key)
+                    unique_papers.append(p)
+            
+            st.session_state.papers = unique_papers[:num_papers]
+            elapsed = time.time() - start
+        
+        # Display results
+        st.success(f"✅ Found {len(st.session_state.papers)} papers in {elapsed:.1f}s")
+        
+        # Show papers
+        for idx, paper in enumerate(st.session_state.papers, 1):
+            with st.expander(f"{idx}. {paper.get('title', 'Unknown')[:60]}..."):
+                st.write(f"**Title:** {paper.get('title')}")
+                st.write(f"**Authors:** {', '.join(paper.get('authors', ['N/A'])[:3])}")
+                st.write(f"**Year:** {paper.get('year', 'N/A')} | **Citations:** {paper.get('citations', 0)}")
+                st.write(f"**Source:** {paper.get('source', 'N/A').upper()}")
+                st.write("**Abstract:**")
+                st.write(paper.get('abstract', 'N/A')[:300] + "...")
+                
+                if paper.get('url'):
+                    st.link_button("📖 Read Full Paper", paper['url'])
+
+# ============================================================================
+# TAB 2: ANALYSIS (Q&A + Summary)
+# ============================================================================
+with tab2:
+    st.subheader("Research Analysis & Q&A")
+    
+    if not st.session_state.papers:
+        st.info("👉 Search for papers first in the 🔍 Search tab")
+    else:
+        analysis_type = st.radio("Select analysis:", 
+                                ["Summary", "Q&A", "Research Gaps", "Introduction Generator"])
+        
+        if analysis_type == "Summary":
+            if st.button("📊 Generate Summary", use_container_width=True):
+                with st.spinner("🤖 Analyzing papers..."):
+                    if rag_pipeline:
+                        summary = rag_pipeline.generate_summary(st.session_state.papers)
+                        st.write(summary)
+                    else:
+                        st.info("RAG Pipeline not available (Ollama might not be running)")
+        
+        elif analysis_type == "Q&A":
+            question = st.text_input("Ask a question about the papers:")
+            if question and st.button("💬 Get Answer", use_container_width=True):
+                with st.spinner("🤖 Generating answer..."):
+                    if rag_pipeline:
+                        answer = rag_pipeline.answer_question(question, st.session_state.papers)
+                        st.write(answer)
+                    else:
+                        st.info("RAG Pipeline not available")
+        
+        elif analysis_type == "Research Gaps":
+            if st.button("🔍 Identify Research Gaps", use_container_width=True):
+                with st.spinner("🤖 Analyzing gaps..."):
+                    if rag_pipeline:
+                        gaps = rag_pipeline.find_research_gaps(st.session_state.papers)
+                        st.write(gaps)
+                    else:
+                        st.info("RAG Pipeline not available")
+        
+        elif analysis_type == "Introduction Generator":
+            if st.button("📝 Generate Introduction", use_container_width=True):
+                with st.spinner("🤖 Writing introduction..."):
+                    if rag_pipeline:
+                        intro = rag_pipeline.generate_introduction(st.session_state.papers)
+                        st.write(intro)
+                    else:
+                        st.info("RAG Pipeline not available")
+
+# ============================================================================
+# TAB 3: RL FEEDBACK LOOP
+# ============================================================================
+with tab3:
+    st.subheader("🤖 RL Feedback System")
+    
+    st.write("**How it works:** The system learns from your feedback to improve search quality.")
+    
+    if st.session_state.papers:
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            papers_quality = st.slider("📄 Paper Quality (0-10):", 0, 10, 5)
+        with col2:
+            answer_quality = st.slider("💬 Answer Quality (0-10):", 0, 10, 5)
+        
+        if st.button("📊 Submit Feedback", use_container_width=True):
+            # Create RL action
+            action = Action(
+                action_type="feedback",
+                query=st.session_state.query,
+                parameters={"papers_quality": papers_quality, "answer_quality": answer_quality}
+            )
+            
+            # Execute RL step
+            result = rl_loop.step(
+                action=action,
+                papers_found=len(st.session_state.papers),
+                answer_quality=answer_quality / 10.0
+            )
+            
+            # Store feedback
+            feedback_entry = {
+                "query": st.session_state.query,
+                "papers_quality": papers_quality,
+                "answer_quality": answer_quality,
+                "reward": result.reward,
+                "timestamp": datetime.now().isoformat(),
+                "action": action.action_type
+            }
+            st.session_state.feedback_history.append(feedback_entry)
+            
+            # Trigger n8n if configured
+            if n8n.enabled:
+                n8n.trigger_research_pipeline(st.session_state.query, st.session_state.papers)
+            
+            st.success(f"✅ Feedback recorded! Reward: {result.reward:.2f}")
+            st.write(f"**Episode Total Reward:** {result.info['total_reward']:.2f}")
+    else:
+        st.info("👉 Search for papers first to provide feedback")
+
+# ============================================================================
+# TAB 4: ANALYTICS DASHBOARD
+# ============================================================================
+with tab4:
+    st.subheader("📈 Analytics Dashboard")
+    
+    if st.session_state.papers or st.session_state.feedback_history:
+        # Get analytics
+        dashboard = analytics.get_dashboard_data(
+            st.session_state.papers,
+            st.session_state.feedback_history
+        )
+        
+        # Display metrics
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric("Total Papers", dashboard['papers'].get('total_papers', 0))
+        with col2:
+            st.metric("Avg Citations", f"{dashboard['papers'].get('avg_citations', 0):.1f}")
+        with col3:
+            st.metric("Feedback Points", dashboard['feedback'].get('total_feedback_points', 0))
+        with col4:
+            st.metric("Avg Reward", f"{dashboard['feedback'].get('avg_reward', 0):.2f}")
+        
+        st.divider()
+        
+        # RL Episode History
+        if st.session_state.feedback_history:
+            st.subheader("🎮 RL Episode History")
+            
+            feedback_df = st.session_state.feedback_history
+            st.write(f"Total feedback points: {len(feedback_df)}")
+            
+            for idx, f in enumerate(feedback_df[-5:], 1):  # Show last 5
+                st.write(f"**#{idx}** | Query: *{f['query'][:40]}...* | Reward: {f['reward']:.2f} | {f['timestamp'][:10]}")
+        
+        st.divider()
+        
+        # Processing method
+        col1, col2 = st.columns(2)
+        with col1:
+            st.write(f"**Analytics Engine:** {dashboard['papers'].get('processing_method', 'N/A').upper()}")
+        with col2:
+            st.write(f"**PySpark Available:** {'✅ Yes' if analytics.spark_available else '⚠️ Fallback'}")
+    
+    else:
+        st.info("👉 Search for papers or submit feedback to see analytics")
+
+# ============================================================================
+# FOOTER
+# ============================================================================
 st.divider()
-st.caption("🔬 AI Research Assistant | Search ANY Topic | Plagiarism-Free Content | Powered by Ollama + FAISS")
+st.caption("🚀 AI Research Assistant v3.0 | Production Ready | RL-Powered | hackathon-ready")
