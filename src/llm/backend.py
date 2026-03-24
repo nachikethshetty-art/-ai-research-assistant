@@ -39,13 +39,7 @@ class LLMBackend:
     def _check_gemini(self) -> bool:
         """Check if Gemini API key is configured"""
         api_key = os.getenv("GOOGLE_API_KEY")
-        if not api_key:
-            return False
-        try:
-            genai.configure(api_key=api_key)
-            return True
-        except:
-            return False
+        return bool(api_key)
     
     def generate_stream(self, prompt: str, max_tokens: int = 1000) -> Generator[str, None, None]:
         """Generate text with streaming - tries Ollama first, then Gemini"""
@@ -91,23 +85,37 @@ class LLMBackend:
             yield f"❌ Ollama error: {str(e)}"
     
     def _gemini_generate(self, prompt: str, max_tokens: int) -> Generator[str, None, None]:
-        """Generate using Google Gemini API"""
+        """Generate using Google Gemini API via REST"""
         try:
             api_key = os.getenv("GOOGLE_API_KEY")
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel("gemini-pro")
-            response = model.generate_content(
-                prompt,
-                generation_config=genai.types.GenerationConfig(
-                    max_output_tokens=max_tokens,
-                    temperature=0.7,
-                )
-            )
             
-            # Stream the response in chunks
-            for chunk in response.text.split(' '):
-                if chunk:
-                    yield chunk + ' '
+            # Use REST API directly for better compatibility
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={api_key}"
+            
+            payload = {
+                "contents": [{
+                    "parts": [{
+                        "text": prompt
+                    }]
+                }],
+                "generationConfig": {
+                    "maxOutputTokens": max_tokens,
+                    "temperature": 0.7
+                }
+            }
+            
+            response = requests.post(url, json=payload, timeout=60)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "candidates" in data and len(data["candidates"]) > 0:
+                    text = data["candidates"][0].get("content", {}).get("parts", [{}])[0].get("text", "")
+                    # Stream in chunks
+                    for chunk in text.split(' '):
+                        if chunk:
+                            yield chunk + ' '
+            else:
+                yield f"❌ Gemini API error: {response.status_code} - {response.text}"
                     
         except Exception as e:
             yield f"❌ Gemini error: {str(e)}"
