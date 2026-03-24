@@ -145,3 +145,4 @@ dmypy.json
 .cache/
 temp/
 tmp/
+.env
