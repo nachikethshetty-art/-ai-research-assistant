@@ -90,7 +90,7 @@ class LLMBackend:
             api_key = os.getenv("GOOGLE_API_KEY")
             
             # Use REST API directly for better compatibility
-            url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key={api_key}"
+            url = f"https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key={api_key}"
             
             payload = {
                 "contents": [{
