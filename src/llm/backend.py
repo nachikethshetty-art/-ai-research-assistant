@@ -93,7 +93,7 @@ class LLMBackend:
     def _gemini_generate(self, prompt: str, max_tokens: int) -> Generator[str, None, None]:
         """Generate using Google Gemini API"""
         try:
-            model = genai.GenerativeModel("gemini-pro")
+            model = genai.GenerativeModel("gemini-1.5-flash")
             response = model.generate_content(
                 prompt,
                 generation_config=genai.types.GenerationConfig(
