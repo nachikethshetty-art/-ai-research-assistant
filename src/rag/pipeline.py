@@ -119,17 +119,17 @@ class RAGPipeline:
         prompt = f"""You are a senior research analyst. Synthesize all {len(papers)} papers about '{query}' into one comprehensive summary.
 
 REQUIREMENTS:
-- Total word count: 300-400 words (critical - check word count)
-- Structure: 4-5 well-developed paragraphs
+- Total word count: 200 words (STRICT - must be concise)
+- Structure: 3-4 well-developed paragraphs
 - Content: Synthesize across ALL papers - not individual summaries
-- Include: Research landscape, major findings, methodologies, consensus areas, diverging views, and current state
+- Include: Research landscape, major findings, methodologies, and current state
 - Focus on: Patterns and trends across papers, not individual paper details
 - Style: Academic but accessible, flowing naturally
 - Do NOT: List papers individually, use bullet points, or treat papers separately
 
 Write a unified synthesis that shows how these papers collectively advance the field:"""
         
-        yield from self.llm_backend.generate_stream(prompt, max_tokens=2000)
+        yield from self.llm_backend.generate_stream(prompt, max_tokens=300)
 
     def detect_research_gaps(self, papers: List[Dict]):
         """
@@ -156,25 +156,22 @@ Write a unified synthesis that shows how these papers collectively advance the f
 UNIFIED GAP ANALYSIS (NOT paper-by-paper):
 Focus on what is MISSING across the entire body of research:
 
-1. **Critical Unresolved Questions**: What fundamental questions remain unanswered by the collective body of work?
-2. **Methodological Gaps**: What research approaches, techniques, or tools are underexplored or missing?
-3. **Disciplinary Gaps**: What perspectives from other fields could enrich this research area?
-4. **Empirical Gaps**: What real-world applications or datasets need investigation?
-5. **Theoretical Gaps**: What theoretical frameworks are needed to unify or advance the field?
-6. **Scale/Context Gaps**: What scenarios, populations, or contexts are underrepresented?
+1. **Critical Unresolved Questions**: What fundamental questions remain unanswered?
+2. **Methodological Gaps**: What research approaches are underexplored?
+3. **Disciplinary Gaps**: What perspectives from other fields could help?
+4. **Empirical Gaps**: What real-world applications need investigation?
+5. **Theoretical Gaps**: What frameworks are needed to advance the field?
 
 REQUIREMENTS for your response:
-- Identify 5-6 major research gaps (not minor ones)
-- Each gap should be a substantive paragraph (3-4 sentences)
-- Be specific: Reference actual findings or the absence of findings
-- Be actionable: Suggest concrete research directions
-- Be impactful: Prioritize gaps that could significantly advance the field
+- Identify 3-4 major research gaps (most impactful only)
+- Total word count: 200 words (STRICT - must be concise)
+- Each gap: 2-3 sentences, specific and actionable
+- Be concise: No unnecessary elaboration
 - Synthesize across papers: Show how gaps emerge from the collective analysis
-- Avoid: Listing papers individually or repeating what's already stated
 
-Provide a comprehensive gap analysis:"""
+Provide a concise gap analysis:"""
         
-        yield from self.llm_backend.generate_stream(prompt, max_tokens=2000)
+        yield from self.llm_backend.generate_stream(prompt, max_tokens=300)
 
     def generate_answer(self, query: str, context: List[Dict]):
         """Generate an answer to a query based on provided context."""
