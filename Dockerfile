@@ -1,5 +1,6 @@
-# AI Research Assistant - Production Ready Docker Image
-# Supports Streamlit with Ollama integration
+# AI Research Assistant - HF Spaces Optimized
+# Lightweight: Streamlit + Google Gemini API (no Ollama needed)
+# Fast build: ~5 minutes on HF free tier
 
 FROM python:3.11-slim
 
