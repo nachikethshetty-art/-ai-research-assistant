@@ -6,7 +6,9 @@ faiss-cpu>=1.7.0
 sentence-transformers>=2.2.0
 scikit-learn>=1.3.0
 setuptools>=65.0.0
-pyspark>=3.4.0
+google-generativeai>=0.3.0
 fastapi>=0.104.0
 plotly>=5.0.0
 reportlab>=4.0.0
+# Optional: Uncomment if you need PySpark analytics
+# pyspark>=3.4.0
