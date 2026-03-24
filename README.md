@@ -1,364 +1,726 @@
-# 🔬 AI Research Assistant v3.0 - Hackathon Edition# 🔬 AI Research Assistant v3.0# 🔬 AI Research Assistant v2.0
+# 🔬 AI Research Assistant# 🔬 AI Research Assistant v3.0 - Hackathon Edition# 🔬 AI Research Assistant v3.0# 🔬 AI Research Assistant v2.0
 
 
 
-> **AI-Powered Research Paper Analysis Platform**  
+> **Advanced AI-Powered Research Paper Analysis Platform**
 
-> *Search, summarize, analyze research gaps, and generate insights—all in one place*
+>
 
-**Lightning-fast research paper analysis with AI-powered insights****Search ANY research topic • Find 10+ papers • Generate insights • No API costs**
+> Search any research topic • Fetch papers from 3 sources • Get unified AI summaries • Detect research gaps • Ask questions • System learns from feedback> **AI-Powered Research Paper Analysis Platform**  
+
+
+
+[![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen?style=flat-square)](.)> *Search, summarize, analyze research gaps, and generate insights—all in one place*
+
+[![Python](https://img.shields.io/badge/Python-3.11-blue?style=flat-square)](https://python.org)
+
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue?style=flat-square)](https://docker.com)**Lightning-fast research paper analysis with AI-powered insights****Search ANY research topic • Find 10+ papers • Generate insights • No API costs**
+
+[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
 ![Status](https://img.shields.io/badge/Status-Hackathon%20Ready-brightgreen?style=flat-square)
 
+---
+
 ![Python](https://img.shields.io/badge/Python-3.11-blue?style=flat-square)
+
+## 🎯 Why This Wins Hackathons
 
 ![Docker](https://img.shields.io/badge/Docker-Ready-blue?style=flat-square)
 
-![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)## Features![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
+1. **🧠 OpenEnv-Style RL Loop** - System learns from user feedback in real-time
 
+2. **📝 Unified Summaries** - Single 300-400 word synthesis (not repetitive)![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)## Features![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
 
+3. **🔍 Multi-Source Fetching** - 3-source fallback (arXiv → Scholar → OpenAlex)
 
-## ⚡ 30-Second Overview![Python](https://img.shields.io/badge/Python-3.11-blue)
+4. **⚡ Real-Time Streaming** - Watch summaries generate live
 
+5. **🤖 Dual LLM Architecture** - Ollama (primary) + Gemini (fallback)
 
+6. **📊 Production-Ready** - Docker containerized, deployable anywhere## ⚡ 30-Second Overview![Python](https://img.shields.io/badge/Python-3.11-blue)
 
-Search **ANY** research topic → Get papers from arXiv, Semantic Scholar, OpenAlex → Read unified **300-400 word summary** → Discover **5-6 research gaps** → Ask questions → System learns from feedback.✨ **Core Features:**![Docker](https://img.shields.io/badge/Docker-Ready-blue)
 
-
-
-**Deploy instantly:** `docker-compose up -d` → Share link → Anyone can use!- 🔍 **Paper Search**: Fetch from arXiv and Semantic Scholar simultaneously![License](https://img.shields.io/badge/License-MIT-green)
-
-
-
----- 📊 **Unified Analysis**: 300-400 word synthesis across all papers
-
-
-
-## 🏆 Why This Wins Hackathons- 🔎 **Research Gap Detection**: Identify 5-6 critical research gaps## Quick Start (60 seconds)
-
-
-
-✨ **Innovation:**- 💬 **Q&A System**: Ask questions about the papers
-
-- 🧠 **OpenEnv RL Feedback Loop**: System learns from user ratings in real-time (not just static analysis)
-
-- 📊 **Unified Analysis**: Single synthesis of ALL papers (not repetitive individual summaries)- 📝 **Abstract Generation**: Generate new research abstracts### Option 1: Local (Development)
-
-- ⚡ **Real-time Streaming**: Watch AI generate summaries live (no waiting for full response)
-
-- 🔄 **Intelligent Fallbacks**: 3-source paper fetching with automatic API fallbacks- 🎮 **RL Feedback Loop**: OpenEnv-style learning from user feedback```bash
-
-
-
-✨ **Technical Excellence:**- 📈 **Analytics Dashboard**: Track papers, citations, and system performance# Terminal 1: Start Ollama
-
-- 🐳 **Production-Ready Docker**: Full containerization with health checks
-
-- 🚀 **Shareable Instantly**: Anyone with link can use (zero installation friction)ollama serve
-
-- 🎯 **Research Impact**: Saves researchers 2-3 hours of manual analysis per topic
-
-- 💰 **Zero API Costs**: Uses free APIs + local Ollama (no paid services)## Quick Start
-
-
-
-✨ **Judge-Friendly:**# Terminal 2: Run app
-
-- ✅ Works out-of-the-box (`docker-compose up -d`)
-
-- ✅ Clean, documented code (no duplicates/unused files)### Option 1: Docker (Recommended - Anyone can access!)cd /Users/amshumathshetty/Desktop/ai-research-assistant
-
-- ✅ Comprehensive README with architecture diagrams
-
-- ✅ Actual value proposition (solves real problem)source venv/bin/activate
-
-
-
----**Prerequisites:** Docker and Docker Compose installedstreamlit run app/streamlit_app.py
-
-
-
-## 🚀 Quick Start (2 minutes)```
-
-
-
-### With Docker (Recommended - Share link with judges!)```bashThen open: **http://localhost:8501**
-
-```bash
-
-cd ai-research-assistant# Clone and navigate to the project
-
-docker-compose up -d
-
-```cd ai-research-assistant### Option 2: Docker (Production)
-
-👉 Open: **http://localhost:8501**
-
-```bash
-
-### Share Global Link
-
-```bash# Start the app (first time will pull Ollama model ~4GB)docker run -p 8501:8501 -p 11434:11434 ai-research-assistant:latest
-
-# Find your IP
-
-ifconfig getifaddr en0  # macOS → e.g., 192.168.1.100docker-compose up -d```
-
-
-
-# Share this link (no installation needed for viewers!)Then open: **http://localhost:8501**
-
-http://192.168.1.100:8501
-
-```# View app at http://localhost:8501
-
-
-
-### Local Development (Without Docker)## Features
-
-```bash
-
-source venv/bin/activate# To stop:
-
-streamlit run app/streamlit_app.py
-
-# Note: Requires 'ollama serve' running separatelydocker-compose down### 🔍 Research Search (Tab 1)
-
-```
-
-```- Search **ANY** research topic
 
 ---
 
-- Fetch papers from **Semantic Scholar** + **arXiv**
 
-## 💡 Core Features
 
-**Share with Others:**- Get **10+ papers** with summaries
-
-### 1. **🔍 Multi-Source Paper Search**
-
-- Search ANY research topic- Once running, anyone can access: `http://YOUR_MACHINE_IP:8501`- See research **gaps** and **top papers**
-
-- Simultaneously queries: arXiv, Semantic Scholar, OpenAlex
-
-- Intelligent timeouts with automatic fallbacks- Find your IP: `ipconfig getifaddr en0` (macOS) or `hostname -I` (Linux)- Click to read full papers
-
-- Returns 5-20 papers in 5-10 seconds
-
-- No rate limiting or API costs- Example: `http://192.168.1.100:8501`
+## ⚡ Quick Start (Choose One)Search **ANY** research topic → Get papers from arXiv, Semantic Scholar, OpenAlex → Read unified **300-400 word summary** → Discover **5-6 research gaps** → Ask questions → System learns from feedback.✨ **Core Features:**![Docker](https://img.shields.io/badge/Docker-Ready-blue)
 
 
 
-### 2. **📊 Unified Research Summary**### 💬 Content Generation (Tab 2)
+### Local Demo (1 minute)
 
-- **300-400 words** synthesizing ALL papers together
+```bash
 
-- Identifies consensus and diverging views**Pre-load Mistral Model (Optional):**- Generate **plagiarism-free abstracts** (90%+ original)
+cd /Users/amshumathshetty/Desktop/ai-research-assistant**Deploy instantly:** `docker-compose up -d` → Share link → Anyone can use!- 🔍 **Paper Search**: Fetch from arXiv and Semantic Scholar simultaneously![License](https://img.shields.io/badge/License-MIT-green)
 
-- Real-time streaming (watch it generate!)
+docker-compose up -d
 
-- Publication-ready quality```bash- Generate **research introductions**
+ifconfig getifaddr en0
 
-- Perfect for literature reviews
+# Share: http://YOUR_IP:8501
 
-docker-compose exec ollama ollama pull mistral- **Q&A** on any research topic
-
-### 3. **🔎 Research Gap Detection**
-
-- Identifies **5-6 major research gaps** across entire collection```- All powered by local LLM (no cloud costs!)
-
-- Analyzes:
-
-  - Unanswered questions
-
-  - Methodological gaps
-
-  - Contradictions between papers### Option 2: Local Installation## What's Included
-
-  - Future work opportunities
-
-  - Emerging research areas
-
-- Each gap is specific and actionable
-
-**Prerequisites:**### Core Technologies
-
-### 4. **💬 AI-Powered Q&A**
-
-- Ask ANY question about papers- Python 3.9+- **Streamlit** - Interactive web UI
-
-- Vector search for context
-
-- Cites source papers- Ollama running: `ollama serve` (in another terminal)- **Ollama** - Local LLM inference (Mistral 7B)
-
-- Context-aware responses
-
-- **FAISS** - Fast semantic search
-
-### 5. **📝 Abstract Generation**
-
-- Generate new research abstracts```bash- **SentenceTransformers** - Embeddings
-
-- Based on collective paper insights
-
-- Plagiarism-free original content# Create virtual environment- **arXiv + Semantic Scholar** - Free paper APIs
+```---- 📊 **Unified Analysis**: 300-400 word synthesis across all papers
 
 
 
-### 6. **🧠 OpenEnv RL Feedback Loop** (UNIQUE!)python3 -m venv venv
+### Deploy to Cloud (5 minutes)
 
-- **Innovation**: System learns from user feedback in real-time
+```bash
 
-- Rate: paper relevance, answer quality, response speedsource venv/bin/activate### Key Improvements (Session 4)
+git push hf main## 🏆 Why This Wins Hackathons- 🔎 **Research Gap Detection**: Identify 5-6 critical research gaps## Quick Start (60 seconds)
 
-- Accumulates reward over episodes
-
-- Optimizes strategies based on feedback✅ Fixed arXiv XML parsing (namespace handling)
-
-- Creates continuously improving research assistant
-
-- Implements episodic learning like OpenAI Gym# Install dependencies✅ Improved Semantic Scholar (graceful fallback)
-
-
-
-### 7. **📈 Analytics Dashboard**pip install -r requirements.txt✅ Better author/year/URL extraction
-
-- Paper statistics and citations
-
-- Feedback history✅ Docker container built (2.27GB)
-
-- System learning progress
-
-- Strategy optimization tracking# Run the app✅ Comprehensive .gitignore (130+ rules)
-
-
-
----streamlit run app/streamlit_app.py✅ Clean project structure
-
-
-
-## 🏗️ Architecture```✅ Complete documentation
-
-
+# Authenticate with HF token: https://huggingface.co/settings/tokens
 
 ```
 
-┌─────────────────────────────────────────────────────┐
 
-│         AI RESEARCH ASSISTANT v3.0                  │## How to Use## Installation
+
+### Run Locally (No Docker)✨ **Innovation:**- 💬 **Q&A System**: Ask questions about the papers
+
+```bash
+
+source venv/bin/activate- 🧠 **OpenEnv RL Feedback Loop**: System learns from user ratings in real-time (not just static analysis)
+
+streamlit run app/streamlit_app.py
+
+# Note: Requires `ollama serve` running separately- 📊 **Unified Analysis**: Single synthesis of ALL papers (not repetitive individual summaries)- 📝 **Abstract Generation**: Generate new research abstracts### Option 1: Local (Development)
+
+```
+
+- ⚡ **Real-time Streaming**: Watch AI generate summaries live (no waiting for full response)
+
+---
+
+- 🔄 **Intelligent Fallbacks**: 3-source paper fetching with automatic API fallbacks- 🎮 **RL Feedback Loop**: OpenEnv-style learning from user feedback```bash
+
+## 🚀 Features
+
+
+
+### Tab 1: Search & Analyze
+
+- **Multi-Source Paper Search**✨ **Technical Excellence:**- 📈 **Analytics Dashboard**: Track papers, citations, and system performance# Terminal 1: Start Ollama
+
+  - arXiv (instant)
+
+  - Semantic Scholar (robust)- 🐳 **Production-Ready Docker**: Full containerization with health checks
+
+  - OpenAlex (fallback)
+
+  - 🚀 **Shareable Instantly**: Anyone with link can use (zero installation friction)ollama serve
+
+- **Unified Research Summaries**
+
+  - 300-400 words per topic- 🎯 **Research Impact**: Saves researchers 2-3 hours of manual analysis per topic
+
+  - Synthesizes across ALL papers
+
+  - Streaming responses- 💰 **Zero API Costs**: Uses free APIs + local Ollama (no paid services)## Quick Start
+
+  
+
+- **Research Gap Detection**
+
+  - Identifies 5-6 critical gaps
+
+  - Actionable recommendations✨ **Judge-Friendly:**# Terminal 2: Run app
+
+  - Based on collective analysis
+
+- ✅ Works out-of-the-box (`docker-compose up -d`)
+
+### Tab 2: Q&A & Generation
+
+- Ask questions about papers- ✅ Clean, documented code (no duplicates/unused files)### Option 1: Docker (Recommended - Anyone can access!)cd /Users/amshumathshetty/Desktop/ai-research-assistant
+
+- Get answers with citations
+
+- Generate research abstracts- ✅ Comprehensive README with architecture diagrams
+
+
+
+### Tab 3: Analytics & Feedback- ✅ Actual value proposition (solves real problem)source venv/bin/activate
+
+- **RL Feedback Loop (OpenEnv)**
+
+  - Rate search/summary quality
+
+  - System learns optimal strategies
+
+  - Real-time reward optimization---**Prerequisites:** Docker and Docker Compose installedstreamlit run app/streamlit_app.py
+
+  
+
+- **Performance Dashboard**
+
+  - Search statistics
+
+  - Learning trends## 🚀 Quick Start (2 minutes)```
+
+  - Strategy evolution
+
+
+
+---
+
+### With Docker (Recommended - Share link with judges!)```bashThen open: **http://localhost:8501**
+
+## 🛠️ Tech Stack
+
+```bash
+
+| Component | Technology |
+
+|-----------|-----------|cd ai-research-assistant# Clone and navigate to the project
+
+| **Frontend** | Streamlit |
+
+| **LLM** | Ollama (Mistral 7B) + Google Gemini |docker-compose up -d
+
+| **Vector Search** | FAISS + Sentence Transformers |
+
+| **Paper Sources** | arXiv + Semantic Scholar + OpenAlex |```cd ai-research-assistant### Option 2: Docker (Production)
+
+| **RL System** | OpenEnv-style feedback loop |
+
+| **Deployment** | Docker + HF Spaces |👉 Open: **http://localhost:8501**
+
+
+
+---```bash
+
+
+
+## 📊 How It Works### Share Global Link
+
+
+
+### Paper Fetching (3-Source Fallback)```bash# Start the app (first time will pull Ollama model ~4GB)docker run -p 8501:8501 -p 11434:11434 ai-research-assistant:latest
+
+```
+
+arXiv API (2-5s)# Find your IP
+
+    ↓ (if slow/unavailable)
+
+Semantic Scholar (8s timeout)ifconfig getifaddr en0  # macOS → e.g., 192.168.1.100docker-compose up -d```
+
+    ↓ (if both fail)
+
+OpenAlex (6s timeout)
+
+```
+
+# Share this link (no installation needed for viewers!)Then open: **http://localhost:8501**
+
+### LLM Generation (Dual Backend)
+
+```http://192.168.1.100:8501
+
+Ollama (local, private, fast)
+
+    ↓ (if unavailable)```# View app at http://localhost:8501
+
+Google Gemini API (always available)
+
+```
+
+
+
+### RL Feedback Loop### Local Development (Without Docker)## Features
+
+```
+
+User rates search/summary```bash
+
+    ↓
+
+System calculates rewardsource venv/bin/activate# To stop:
+
+    ↓
+
+Updates strategy weightsstreamlit run app/streamlit_app.py
+
+    ↓
+
+Optimizes future responses# Note: Requires 'ollama serve' running separatelydocker-compose down### 🔍 Research Search (Tab 1)
+
+```
+
+```
+
+---
+
+```- Search **ANY** research topic
+
+## 🎮 Usage Example
+
+---
+
+### 1. Search Papers
+
+- Enter: "Large Language Models and Fine-Tuning"- Fetch papers from **Semantic Scholar** + **arXiv**
+
+- System fetches papers from 3 sources
+
+- Get ~10 papers in 5-10 seconds## 💡 Core Features
+
+
+
+### 2. Read Summary**Share with Others:**- Get **10+ papers** with summaries
+
+- Unified 300-400 word synthesis
+
+- Identifies key findings### 1. **🔍 Multi-Source Paper Search**
+
+- Professional academic tone
+
+- Search ANY research topic- Once running, anyone can access: `http://YOUR_MACHINE_IP:8501`- See research **gaps** and **top papers**
+
+### 3. Discover Gaps
+
+- 5-6 research gaps identified- Simultaneously queries: arXiv, Semantic Scholar, OpenAlex
+
+- Actionable recommendations
+
+- Based on entire paper collection- Intelligent timeouts with automatic fallbacks- Find your IP: `ipconfig getifaddr en0` (macOS) or `hostname -I` (Linux)- Click to read full papers
+
+
+
+### 4. Ask Questions- Returns 5-20 papers in 5-10 seconds
+
+- "What are the limitations of fine-tuning?"
+
+- Get context-aware answers- No rate limiting or API costs- Example: `http://192.168.1.100:8501`
+
+- See source citations
+
+
+
+### 5. Provide Feedback
+
+- Rate quality (1-5 stars)### 2. **📊 Unified Research Summary**### 💬 Content Generation (Tab 2)
+
+- System learns and improves
+
+- Real-time optimization- **300-400 words** synthesizing ALL papers together
+
+
+
+---- Identifies consensus and diverging views**Pre-load Mistral Model (Optional):**- Generate **plagiarism-free abstracts** (90%+ original)
+
+
+
+## 🌐 Deployment Options- Real-time streaming (watch it generate!)
+
+
+
+### Local (Fastest)- Publication-ready quality```bash- Generate **research introductions**
+
+```bash
+
+docker-compose up -d- Perfect for literature reviews
+
+# Access: http://localhost:8501
+
+```docker-compose exec ollama ollama pull mistral- **Q&A** on any research topic
+
+
+
+### Hugging Face Spaces (Public)### 3. **🔎 Research Gap Detection**
+
+```bash
+
+git push hf main- Identifies **5-6 major research gaps** across entire collection```- All powered by local LLM (no cloud costs!)
+
+# Access: https://huggingface.co/spaces/nachikethshetty/ai-research-assistant-openenv
+
+```- Analyzes:
+
+
+
+### Network Sharing (Share with Judges)  - Unanswered questions
+
+```bash
+
+docker-compose up -d  - Methodological gaps
+
+ifconfig getifaddr en0
+
+# Share: http://YOUR_IP:8501  - Contradictions between papers### Option 2: Local Installation## What's Included
+
+```
+
+  - Future work opportunities
+
+---
+
+  - Emerging research areas
+
+## 📦 What's Included
+
+- Each gap is specific and actionable
+
+```
+
+ai-research-assistant/**Prerequisites:**### Core Technologies
+
+├── app/
+
+│   └── streamlit_app.py              # Main UI (3 tabs)### 4. **💬 AI-Powered Q&A**
+
+├── src/
+
+│   ├── ingestion/                    # Paper fetching- Ask ANY question about papers- Python 3.9+- **Streamlit** - Interactive web UI
+
+│   │   ├── arxiv_fetcher.py
+
+│   │   └── semantic_scholar.py- Vector search for context
+
+│   ├── rag/                          # RAG pipeline
+
+│   │   └── pipeline.py- Cites source papers- Ollama running: `ollama serve` (in another terminal)- **Ollama** - Local LLM inference (Mistral 7B)
+
+│   ├── rl/                           # Reinforcement learning
+
+│   │   └── feedback_loop.py- Context-aware responses
+
+│   ├── llm/                          # LLM backend
+
+│   │   └── backend.py                # Ollama + Gemini- **FAISS** - Fast semantic search
+
+│   └── analytics/                    # Analytics
+
+│       └── pyspark_processor.py### 5. **📝 Abstract Generation**
+
+├── Dockerfile                        # Production image
+
+├── docker-compose.yml                # Local setup- Generate new research abstracts```bash- **SentenceTransformers** - Embeddings
+
+├── requirements.txt                  # Dependencies
+
+└── README.md                         # This file- Based on collective paper insights
+
+```
+
+- Plagiarism-free original content# Create virtual environment- **arXiv + Semantic Scholar** - Free paper APIs
+
+---
+
+
+
+## ⚙️ Configuration
+
+### 6. **🧠 OpenEnv RL Feedback Loop** (UNIQUE!)python3 -m venv venv
+
+### Enable Gemini Fallback (Recommended)
+
+- **Innovation**: System learns from user feedback in real-time
+
+Get free API key: https://makersuite.google.com
+
+- Rate: paper relevance, answer quality, response speedsource venv/bin/activate### Key Improvements (Session 4)
+
+```bash
+
+export GOOGLE_API_KEY="your-key-here"- Accumulates reward over episodes
+
+
+
+# Or set in HF Space secrets (Name: GOOGLE_API_KEY)- Optimizes strategies based on feedback✅ Fixed arXiv XML parsing (namespace handling)
+
+```
+
+- Creates continuously improving research assistant
+
+### Adjust Timeouts
+
+Edit `docker-compose.yml`:- Implements episodic learning like OpenAI Gym# Install dependencies✅ Improved Semantic Scholar (graceful fallback)
+
+```yaml
+
+environment:
+
+  SEMANTIC_SCHOLAR_TIMEOUT: 8
+
+  OPENALEX_TIMEOUT: 6### 7. **📈 Analytics Dashboard**pip install -r requirements.txt✅ Better author/year/URL extraction
+
+```
+
+- Paper statistics and citations
+
+---
+
+- Feedback history✅ Docker container built (2.27GB)
+
+## 📈 Performance
+
+- System learning progress
+
+| Operation | Time |
+
+|-----------|------|- Strategy optimization tracking# Run the app✅ Comprehensive .gitignore (130+ rules)
+
+| Paper Search | 5-10s |
+
+| Summary Generation | 15-30s |
+
+| Gap Detection | 20-40s |
+
+| Q&A Response | 5-15s |---streamlit run app/streamlit_app.py✅ Clean project structure
+
+| App Startup | 5-10s |
+
+
+
+**Note:** Times are CPU-only. GPU would be 2-5x faster.
+
+## 🏗️ Architecture```✅ Complete documentation
+
+---
+
+
+
+## 🔧 Troubleshooting
+
+```
+
+### Docker won't start
+
+```bash┌─────────────────────────────────────────────────────┐
+
+# Make sure Docker Desktop is running
+
+lsof -i :8501  # Check if port is in use│         AI RESEARCH ASSISTANT v3.0                  │## How to Use## Installation
+
+```
 
 ├─────────────────────────────────────────────────────┤
 
-│                                                     │
+### Paper search slow
 
-│  🎨 FRONTEND (Streamlit UI)                        │
+```bash│                                                     │
+
+# Semantic Scholar has rate limit (7 req/sec)
+
+# Wait 1 minute and retry│  🎨 FRONTEND (Streamlit UI)                        │
+
+```
 
 │  ├─ Tab 1: Search & Unified Analysis               │### 1️⃣ Search Papers### From Source
 
-│  ├─ Tab 2: Q&A & Abstract Generation               │
+### Ollama unavailable
 
-│  └─ Tab 3: Analytics & RL Feedback Loop            │- Enter research topic (e.g., "quantum computing", "climate change")```bash
+```bash│  ├─ Tab 2: Q&A & Abstract Generation               │
+
+# Add GOOGLE_API_KEY for automatic Gemini fallback
+
+export GOOGLE_API_KEY="your-key"│  └─ Tab 3: Analytics & RL Feedback Loop            │- Enter research topic (e.g., "quantum computing", "climate change")```bash
+
+```
 
 │                                                     │
 
-│  🧠 BACKEND SERVICES                               │- Select number of papers (5-20)# Clone repository
+### HF Spaces build slow
 
-│  ├─ 🔍 Paper Fetchers (3 sources)                  │
+```bash│  🧠 BACKEND SERVICES                               │- Select number of papers (5-20)# Clone repository
+
+# Free tier = slower build (5-10 min)
+
+# Use local demo while waiting│  ├─ 🔍 Paper Fetchers (3 sources)                  │
+
+```
 
 │  │   ├─ arXiv (2-5s)                               │- Click "🔍 Search & Analyze"git clone <repo-url>
 
+---
+
 │  │   ├─ Semantic Scholar (8s)                      │
+
+## 🧪 Testing
 
 │  │   └─ OpenAlex (fallback)                        │cd ai-research-assistant
 
-│  │                                                  │
+```bash
+
+# Test paper fetching│  │                                                  │
+
+python -c "from src.ingestion.arxiv_fetcher import fetch_arxiv; print(fetch_arxiv('deep learning'))"
 
 │  ├─ 📚 RAG Pipeline                                │### 2️⃣ View Results
 
-│  │   ├─ FAISS Vector Store                         │
+# Test RAG pipeline
 
-│  │   ├─ Sentence Transformers                      │- **📊 Research Summary**: 300-400 word synthesis of all papers# Create environment
+python -c "from src.rag.pipeline import RAGPipeline; rag = RAGPipeline(); print(rag.get_llm_status())"│  │   ├─ FAISS Vector Store                         │
 
-│  │   └─ Ollama + Mistral LLM                       │
 
-│  │                                                  │- **🔍 Research Gaps**: 5-6 critical research gaps identifiedpython3 -m venv venv
 
-│  └─ 🧠 OpenEnv RL Learning System                  │
+# Test RL feedback│  │   ├─ Sentence Transformers                      │- **📊 Research Summary**: 300-400 word synthesis of all papers# Create environment
 
-│      ├─ Episode tracking                           │- **📚 Papers**: Full list with citations and abstractssource venv/bin/activate
+python -c "from src.rl.feedback_loop import RLFeedbackLoop; rl = RLFeedbackLoop(); print(rl)"
 
-│      ├─ Reward calculation                         │
+```│  │   └─ Ollama + Mistral LLM                       │
+
+
+
+---│  │                                                  │- **🔍 Research Gaps**: 5-6 critical research gaps identifiedpython3 -m venv venv
+
+
+
+## 🎓 What Makes This Special│  └─ 🧠 OpenEnv RL Learning System                  │
+
+
+
+### Innovation│      ├─ Episode tracking                           │- **📚 Papers**: Full list with citations and abstractssource venv/bin/activate
+
+- **RL Feedback Loop**: Unlike static systems, this learns from user feedback in real-time
+
+- **Unified Analysis**: Synthesizes across ALL papers, not individual summaries│      ├─ Reward calculation                         │
+
+- **Multi-Source**: Intelligent fallbacks ensure reliability
 
 │      ├─ Strategy optimization                      │
 
-│      └─ Continuous learning                        │
+### Code Quality
 
-│                                                     │### 3️⃣ Ask Questions (Tab 2)# Install dependencies
+- Clean, modular architecture│      └─ Continuous learning                        │
+
+- No duplicate files or unused code
+
+- Comprehensive error handling│                                                     │### 3️⃣ Ask Questions (Tab 2)# Install dependencies
+
+- Production-ready Docker setup
 
 │  📊 ANALYTICS ENGINE                               │
 
-│  └─ Real-time metrics & dashboards                │- Ask any question about the paperspip install -r requirements.txt
+### User Experience
 
-│                                                     │
+- Real-time streaming responses│  └─ Real-time metrics & dashboards                │- Ask any question about the paperspip install -r requirements.txt
+
+- 3-tab interface
+
+- Instant sharing (no installation friction)│                                                     │
+
+- Graceful degradation (works without Ollama)
 
 │  🐳 DOCKER CONTAINERIZATION                        │- Generate new research abstracts
 
-│  └─ Health checks & orchestration                  │
+### Value Proposition
 
-│                                                     │# Start Ollama (Terminal 1)
+- Saves researchers 2-3 hours per analysis│  └─ Health checks & orchestration                  │
+
+- Zero API costs
+
+- Instant deployment│                                                     │# Start Ollama (Terminal 1)
+
+- Works on any device
 
 └─────────────────────────────────────────────────────┘
 
+---
+
 ```### 4️⃣ Provide Feedback (Tab 3)ollama serve
 
+## 📝 Hackathon Pitch
 
+
+
+> "I built an AI Research Assistant that searches papers from 3 sources, generates unified AI summaries, identifies research gaps, and learns from user feedback using an OpenEnv-style RL loop. It's Docker-ready, deployed on HF Spaces, and features a dual-LLM architecture with automatic fallbacks for reliability."
 
 ---- Rate paper quality, answer quality, and speed
 
+**Tell judges:**
+
+- ✨ OpenEnv-style RL feedback loop (continuous learning)
+
+- ✨ Unified summaries (not repetitive)
+
+- ✨ Multi-source with smart fallbacks## 🛠️ Tech Stack- System learns and improves (OpenEnv-style RL)# Run app (Terminal 2)
+
+- ✨ Real-time streaming (better UX)
+
+- ✨ Production-ready Docker deployment
 
 
-## 🛠️ Tech Stack- System learns and improves (OpenEnv-style RL)# Run app (Terminal 2)
+
+---| Component | Technology | Why It Matters |streamlit run app/streamlit_app.py
 
 
 
-| Component | Technology | Why It Matters |streamlit run app/streamlit_app.py
+## 🔗 Links|-----------|-----------|---|
 
-|-----------|-----------|---|
 
-| **Frontend** | Streamlit | Fast iteration, beautiful UI |## Architecture```
 
-| **Paper Sources** | arXiv + Semantic Scholar + OpenAlex | No costs, reliable, comprehensive |
+- **Live Demo**: https://huggingface.co/spaces/nachikethshetty/ai-research-assistant-openenv| **Frontend** | Streamlit | Fast iteration, beautiful UI |## Architecture```
 
-| **Vector Search** | FAISS | Lightning-fast similarity search |
+- **GitHub**: [Your GitHub URL]
 
-| **Embeddings** | Sentence Transformers | Fast, accurate, lightweight |
+- **Local**: http://YOUR_IP:8501| **Paper Sources** | arXiv + Semantic Scholar + OpenAlex | No costs, reliable, comprehensive |
 
-| **LLM** | Ollama + Mistral 7B | Local, no API costs, privacy-friendly |```### Using Docker
 
-| **RL System** | OpenEnv-style episodic learning | Novel approach judges love |
+
+---| **Vector Search** | FAISS | Lightning-fast similarity search |
+
+
+
+## 📚 Documentation| **Embeddings** | Sentence Transformers | Fast, accurate, lightweight |
+
+
+
+- `DEPLOYMENT.md` - Deployment guide| **LLM** | Ollama + Mistral 7B | Local, no API costs, privacy-friendly |```### Using Docker
+
+- `QUICK_START.md` - Getting started
+
+- `QUICK_COMMANDS.md` - All commands| **RL System** | OpenEnv-style episodic learning | Novel approach judges love |
+
+- `STATUS.md` - Project status
 
 | **Containerization** | Docker + Docker Compose | Production-ready, portable |ai-research-assistant/```bash
 
+---
 
+
+
+## 📄 License
 
 ---├── app/# Build image
 
+MIT License - Free to use and modify
 
+
+
+---
 
 ## 📊 Performance│   └── streamlit_app.py          # Main Streamlit applicationdocker build -f server/Dockerfile -t ai-research-assistant:latest .
 
+## 🙏 Credits
 
+
+
+Built with ❤️ for researchers and hackathons.
 
 | Metric | Time |├── src/
 
+---
+
 |--------|------|
+
+**Ready? Deploy now and start analyzing research! 🚀**
 
 | **Paper Search** | 5-10 seconds |│   ├── ingestion/# Run container
 
-| **Summary Generation** | 30-60 seconds |
+```bash
+
+docker-compose up -d| **Summary Generation** | 30-60 seconds |
+
+```
 
 | **Gap Analysis** | 30-60 seconds |│   │   ├── arxiv_fetcher.py      # arXiv paper fetcherdocker run -p 8501:8501 -p 11434:11434 ai-research-assistant:latest
+
+Then open: **http://localhost:8501**
 
 | **Q&A per Question** | 10-20 seconds |
 
