@@ -129,7 +129,7 @@ REQUIREMENTS:
 
 Write a unified synthesis that shows how these papers collectively advance the field:"""
         
-        yield from self.llm_backend.generate_stream(prompt, max_tokens=1000)
+        yield from self.llm_backend.generate_stream(prompt, max_tokens=2000)
 
     def detect_research_gaps(self, papers: List[Dict]):
         """
@@ -174,7 +174,7 @@ REQUIREMENTS for your response:
 
 Provide a comprehensive gap analysis:"""
         
-        yield from self.llm_backend.generate_stream(prompt, max_tokens=1000)
+        yield from self.llm_backend.generate_stream(prompt, max_tokens=2000)
 
     def generate_answer(self, query: str, context: List[Dict]):
         """Generate an answer to a query based on provided context."""
