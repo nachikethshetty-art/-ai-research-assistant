@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # Streamlit App
+  streamlit:
+    build: .
+    container_name: ai-research-assistant
+    ports:
+      - "8501:8501"
+    environment:
+      - STREAMLIT_SERVER_HEADLESS=true
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+      - STREAMLIT_LOGGER_LEVEL=warning
+      - OLLAMA_HOST=http://ollama:11434
+    depends_on:
+      - ollama
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - research-network
+    volumes:
+      - ./data:/app/data
+
+  # Ollama Service (Language Model)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama-service
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - research-network
+    volumes:
+      - ollama-data:/root/.ollama
+
+networks:
+  research-network:
+    driver: bridge
+
+volumes:
+  ollama-data:
+    driver: local

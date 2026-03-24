@@ -6,6 +6,7 @@ import numpy as np
 import faiss
 from sentence_transformers import SentenceTransformer
 import re
+from llm.backend import LLMBackend
 
 
 class SimpleVectorStore:
@@ -38,7 +39,7 @@ class SimpleVectorStore:
 
 
 class RAGPipeline:
-    """RAG Pipeline with Ollama Integration - Optimized for Speed"""
+    """RAG Pipeline with Ollama + Gemini Fallback - Optimized for Speed"""
     
     def __init__(self, ollama_url="http://localhost:11434"):
         self.ollama_url = ollama_url
@@ -46,17 +47,12 @@ class RAGPipeline:
         self.papers = []
         self.chunks = []
         self.metadata = []
-        self.model = "mistral"
-        self.ollama_available = self._check_ollama()
+        self.llm_backend = LLMBackend(ollama_url=ollama_url)
+        self.ollama_available = self.llm_backend.ollama_available
     
-    def _check_ollama(self):
-        """Check if Ollama is running"""
-        try:
-            response = requests.get(f"{self.ollama_url}/api/tags", timeout=2)
-            if response.status_code == 200:
-                return True
-        except Exception:
-            pass
+    def get_llm_status(self):
+        """Get current LLM backend status"""
+        return self.llm_backend.get_status()
         return False
     
     def prepare_data(self, papers):
@@ -98,173 +94,106 @@ class RAGPipeline:
         for distance, idx in zip(distances[0], indices[0]):
             if idx < len(self.chunks):
                 results.append({
-                    'chunk': self.chunks[idx],
-                    'metadata': self.metadata[idx],
-                    'distance': float(distance)
+                    'distance': float(distance),
+                    'metadata': self.metadata[idx]
                 })
-        
         return results
-    
-    def generate_answer(self, query: str, context_chunks: List[Dict] = None) -> str:
-        """Generate answer using Ollama - OPTIMIZED FOR SPEED"""
-        if context_chunks is None:
-            context_chunks = []
-        
-        # Build context from chunks (truncated for speed)
-        context_text = ""
-        if context_chunks:
-            context_text = "\n".join([
-                f"Paper: {c['metadata']['title']}\nContent: {c['chunk'][:200]}"
-                for c in context_chunks[:2]  # Only use top 2 papers
-            ])
-        
-        # Shorter, faster prompts
-        prompt = f"""{query}
 
-Context: {context_text if context_text else 'General knowledge'}
-
-Answer concisely in 1-2 sentences:"""
-        
-        # If Ollama not available, return fallback immediately
-        if not self.ollama_available:
-            return self._generate_default_answer(query)
-        
-        try:
-            # Use streaming for faster first response
-            response = requests.post(
-                f"{self.ollama_url}/api/generate",
-                json={
-                    "model": self.model,
-                    "prompt": prompt,
-                    "stream": False,
-                    "temperature": 0.5,  # Lower for consistency
-                    "top_p": 0.8,
-                    "num_predict": 100,  # Shorter responses
-                    "num_ctx": 512  # Smaller context window
-                },
-                timeout=12  # Reduced from 30s
-            )
-            
-            if response.status_code == 200:
-                answer = response.json().get('response', '').strip()
-                if answer and len(answer) > 5:
-                    return answer
-        except requests.exceptions.Timeout:
-            # Timeout - return fallback
-            return self._generate_default_answer(query)
-        except Exception:
-            pass
-        
-        return self._generate_default_answer(query)
-    
-    def _generate_default_answer(self, query: str) -> str:
-        """Fallback answer generation when Ollama is unavailable"""
-        # Extract key terms and generate a reasonable response
-        keywords = query.lower().split()
-        
-        responses = {
-            'summary': "Based on recent research in this field, key findings show significant progress in understanding and practical applications.",
-            'gap': "Future research should focus on scalability, real-world validation, and integration with existing systems.",
-            'challenge': "Major challenges include computational complexity, data availability, and practical implementation constraints.",
-            'trend': "Recent trends show increased adoption of AI-driven approaches, cloud-based solutions, and collaborative research methodologies."
-        }
-        
-        for key, response in responses.items():
-            if key in query.lower():
-                return response
-        
-        return "Research in this area is actively advancing. Key areas of focus include novel methodologies, practical applications, and theoretical foundations."
-    
-    def detect_research_gaps(self, papers: List[Dict]) -> List[str]:
-        """Detect and describe research gaps"""
+    def generate_summary(self, query: str, papers: List[Dict]):
+        """Generate a unified comprehensive summary for all papers combined."""
         if not papers:
-            return ["Insufficient papers to analyze"]
-        
-        all_text = " ".join([
-            paper.get('title', '') + " " + paper.get('abstract', '')
-            for paper in papers
-        ]).lower()
-        
-        gaps = []
-        
-        # Check for future work mentions
-        if any(phrase in all_text for phrase in ['future work', 'future research', 'future studies', 'further investigation']):
-            gaps.append("🔮 Future Work: Papers identify several areas for extended research and new methodologies")
-        
-        # Check for limitations
-        if any(phrase in all_text for phrase in ['limitation', 'limited', 'challenging', 'challenge']):
-            gaps.append("⚠️ Limitations & Challenges: Current approaches face scalability, efficiency, or accuracy limitations")
-        
-        # Check for emerging areas
-        if any(phrase in all_text for phrase in ['novel', 'new approach', 'emerging', 'breakthrough']):
-            gaps.append("✨ Emerging Frontiers: Novel techniques and breakthrough approaches are being developed")
-        
-        # Check for application gaps
-        if any(phrase in all_text for phrase in ['application', 'practical', 'implementation', 'real-world']):
-            gaps.append("🛠️ Real-World Applications: Need for practical implementations and deployment strategies")
-        
-        # Check for theoretical gaps
-        if any(phrase in all_text for phrase in ['theoretical', 'foundation', 'framework', 'model']):
-            gaps.append("🧪 Theoretical Advancement: Opportunities to strengthen theoretical understanding and frameworks")
-        
-        # Default gaps if none found
-        if not gaps:
-            gaps = [
-                "🔍 Interdisciplinary Research: Integration with other fields could yield new insights",
-                "📊 Empirical Validation: More comprehensive experimental studies needed",
-                "🌐 Scalability: Solutions need optimization for larger datasets and real-world scenarios"
-            ]
-        
-        return gaps[:5]  # Return top 5 gaps
-    
-    def generate_summary(self, query: str, papers: List[Dict]) -> str:
-        """Generate comprehensive research summary"""
-        if not papers:
-            return "No papers available for summary"
+            yield "No papers to summarize."
+            return
         
         self.prepare_data(papers)
         
-        # Build context from papers
-        paper_info = "\n".join([
-            f"- {p.get('title', 'Unknown')} ({p.get('year', 'N/A')}) - {len(p.get('abstract', ''))} chars"
-            for p in papers[:10]
+        # Create a structured context with all papers' metadata
+        papers_context = "\n\n".join([
+            f"Paper {i+1}: {p.get('title', 'Unknown')}\n"
+            f"Year: {p.get('year', 'N/A')}\n"
+            f"Citations: {p.get('citations', 0)}\n"
+            f"Abstract: {p.get('abstract', '')}"
+            for i, p in enumerate(papers)
         ])
         
-        prompt = f"""Write a comprehensive research summary about: {query}
+        prompt = f"""You are a senior research analyst. Synthesize all {len(papers)} papers about '{query}' into one comprehensive summary.
 
-Based on {len(papers)} papers:
-{paper_info}
+REQUIREMENTS:
+- Total word count: 300-400 words (critical - check word count)
+- Structure: 4-5 well-developed paragraphs
+- Content: Synthesize across ALL papers - not individual summaries
+- Include: Research landscape, major findings, methodologies, consensus areas, diverging views, and current state
+- Focus on: Patterns and trends across papers, not individual paper details
+- Style: Academic but accessible, flowing naturally
+- Do NOT: List papers individually, use bullet points, or treat papers separately
 
-Create a 5-7 sentence summary covering:
-1. Key research area overview
-2. Main findings and contributions
-3. Current state of the field
-4. Emerging trends
-5. Future directions
+Write a unified synthesis that shows how these papers collectively advance the field:"""
+        
+        yield from self.llm_backend.generate_stream(prompt, max_tokens=1000)
 
-Make it academic but accessible."""
+    def detect_research_gaps(self, papers: List[Dict]):
+        """
+        Detects unified research gaps across all papers combined.
+        """
+        if not papers:
+            yield "Not enough papers to analyze for research gaps."
+            return
+
+        self.prepare_data(papers)
         
-        if not self.ollama_available:
-            return f"Summary: Recent research on '{query}' shows significant progress with {len(papers)} relevant papers found. Key themes include novel methodologies, practical applications, and theoretical advances. The field continues to evolve with emerging interdisciplinary approaches."
+        # Create a structured context with all papers' metadata
+        papers_context = "\n\n".join([
+            f"Paper {i+1}: {p.get('title', 'Unknown')}\n"
+            f"Authors: {', '.join(p.get('authors', ['Unknown'])[:3])}\n"
+            f"Year: {p.get('year', 'N/A')}\n"
+            f"Citations: {p.get('citations', 0)}\n"
+            f"Abstract: {p.get('abstract', '')}"
+            for i, p in enumerate(papers)
+        ])
+
+        prompt = f"""You are a senior research strategist. Analyze all {len(papers)} papers collectively to identify critical research gaps.
+
+UNIFIED GAP ANALYSIS (NOT paper-by-paper):
+Focus on what is MISSING across the entire body of research:
+
+1. **Critical Unresolved Questions**: What fundamental questions remain unanswered by the collective body of work?
+2. **Methodological Gaps**: What research approaches, techniques, or tools are underexplored or missing?
+3. **Disciplinary Gaps**: What perspectives from other fields could enrich this research area?
+4. **Empirical Gaps**: What real-world applications or datasets need investigation?
+5. **Theoretical Gaps**: What theoretical frameworks are needed to unify or advance the field?
+6. **Scale/Context Gaps**: What scenarios, populations, or contexts are underrepresented?
+
+REQUIREMENTS for your response:
+- Identify 5-6 major research gaps (not minor ones)
+- Each gap should be a substantive paragraph (3-4 sentences)
+- Be specific: Reference actual findings or the absence of findings
+- Be actionable: Suggest concrete research directions
+- Be impactful: Prioritize gaps that could significantly advance the field
+- Synthesize across papers: Show how gaps emerge from the collective analysis
+- Avoid: Listing papers individually or repeating what's already stated
+
+Provide a comprehensive gap analysis:"""
         
-        try:
-            response = requests.post(
-                f"{self.ollama_url}/api/generate",
-                json={
-                    "model": self.model,
-                    "prompt": prompt,
-                    "stream": False,
-                    "temperature": 0.7,
-                    "num_predict": 250
-                },
-                timeout=45
-            )
-            
-            if response.status_code == 200:
-                summary = response.json().get('response', '').strip()
-                if summary and len(summary) > 20:
-                    return summary
-        except:
-            pass
+        yield from self.llm_backend.generate_stream(prompt, max_tokens=1000)
+
+    def generate_answer(self, query: str, context: List[Dict]):
+        """Generate an answer to a query based on provided context."""
+        if not context:
+            yield "I don't have enough information to answer that question."
+            return
         
-        return f"Summary: Recent research on '{query}' shows significant progress with {len(papers)} relevant papers found. Key themes include novel methodologies, practical applications, and theoretical advances. The field continues to evolve with emerging interdisciplinary approaches."
+        context_str = "\n\n".join([
+            f"Source: {c['metadata']['title']} ({c['metadata']['year']})\n"
+            f"Content: {self.chunks[c['metadata']['chunk_id']]}"
+            for c in context
+        ])
+        
+        prompt = f"""
+        You are a research assistant. Answer the following question based *only* on the provided context.
+        Be concise and cite the source paper title if possible.
+
+        Question: {query}
+        """
+        
+        yield from self.llm_backend.generate_stream(prompt, max_tokens=500)
+

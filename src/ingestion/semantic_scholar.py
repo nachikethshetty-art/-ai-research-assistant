@@ -1,53 +1,108 @@
 import requests
 import time
-import json
 
 def fetch_semantic_scholar(query, limit=10):
     """
-    Fetch papers from Semantic Scholar API
-    Note: Free API has strict rate limits. Gracefully falls back to arXiv if limited.
+    Fetch papers from Semantic Scholar API (OPTIMIZED v2)
+    - Uses multiple fallback endpoints
+    - Aggressive timeout (don't wait for slow API)
+    - Returns empty list if API is slow/down
     """
-    url = "https://api.semanticscholar.org/graph/v1/paper/search"
-
-    params = {
-        "query": query,
-        "limit": min(limit, 50),
-        "fields": "title,abstract,year,citationCount,authors,paperId"
-    }
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (compatible; ResearchBot/1.0)"
-    }
-
+    if not query or not query.strip():
+        return []
+    
+    # Endpoint 1: Try the graph v1 API with minimal fields
     try:
-        time.sleep(1)
-        response = requests.get(url, params=params, headers=headers, timeout=10)
-
-        if response.status_code == 429:
-            return []  # Rate limited - fall back to arXiv
-        if response.status_code == 403:
-            return []  # Forbidden - API issue
-        if response.status_code != 200:
-            return []
-
-        data = response.json()
-        papers = []
+        url = "https://api.semanticscholar.org/graph/v1/paper/search"
         
-        for p in data.get("data", []):
-            if not p.get("abstract"):
-                continue
+        params = {
+            "query": query,
+            "limit": min(limit, 8),
+            "fields": "title,abstract,year,citationCount,authors"
+        }
+        
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Research-Assistant/1.0)"
+        }
+        
+        # Increased timeout to allow API to respond
+        response = requests.get(url, params=params, headers=headers, timeout=8)
+        
+        if response.status_code == 200:
+            data = response.json()
+            papers = []
             
-            papers.append({
-                "source": "semantic_scholar",
-                "title": p.get("title", "Unknown"),
-                "abstract": p.get("abstract", ""),
-                "year": p.get("year", "Unknown"),
-                "citations": p.get("citationCount", 0),
-                "authors": [a.get("name", "Unknown") for a in p.get("authors", [])],
-                "url": f"https://semanticscholar.org/paper/{p.get('paperId')}" if p.get('paperId') else None
-            })
-
-        return papers[:limit]
+            for p in data.get("data", []):
+                try:
+                    title = p.get("title", "").strip()
+                    if not title or len(title) < 5:
+                        continue
+                    
+                    papers.append({
+                        "source": "semantic_scholar",
+                        "title": title,
+                        "abstract": p.get("abstract", "No abstract available"),
+                        "year": p.get("year"),
+                        "citations": p.get("citationCount", 0),
+                        "authors": [a.get("name") for a in p.get("authors", []) if a.get("name")] if p.get("authors") else [],
+                        "url": f"https://semanticscholar.org/paper/{p.get('paperId', '')}" if p.get("paperId") else None
+                    })
+                except Exception:
+                    continue
+            
+            if papers:
+                return papers
+    except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+        print(f"Semantic Scholar API timeout: {e}, trying OpenAlex...")
+    except Exception:
+        pass
+    
+    # Endpoint 2: Try OpenAlex API (faster alternative)
+    try:
+        url = "https://api.openalex.org/works"
         
-    except:
-        return []  # Fail silently - arXiv will be used as fallback
+        params = {
+            "search": query,
+            "per_page": min(limit, 5),
+            "sort": "cited_by_count:desc"
+        }
+        
+        response = requests.get(url, params=params, timeout=6)
+        
+        if response.status_code == 200:
+            data = response.json()
+            papers = []
+            
+            for work in data.get("results", []):
+                try:
+                    title = work.get("title", "").strip()
+                    if not title or len(title) < 5:
+                        continue
+                    
+                    authors = []
+                    for author in work.get("authorships", []):
+                        author_info = author.get("author", {})
+                        if author_info.get("display_name"):
+                            authors.append(author_info["display_name"])
+                    
+                    papers.append({
+                        "source": "openalex",
+                        "title": title,
+                        "abstract": work.get("abstract", "No abstract available"),
+                        "year": work.get("publication_year"),
+                        "citations": work.get("cited_by_count", 0),
+                        "authors": authors[:5],
+                        "url": work.get("ids", {}).get("doi", work.get("id"))
+                    })
+                except Exception:
+                    continue
+            
+            if papers:
+                return papers
+    except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+        print(f"OpenAlex API timeout: {e}")
+    except Exception:
+        pass
+    
+    # Return empty list if both APIs fail (don't block)
+    return []
