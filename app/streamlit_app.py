@@ -122,7 +122,7 @@ with st.sidebar:
 # ============================================================================
 # MAIN TABS
 # ============================================================================
-tab1, tab2, tab3 = st.tabs(["📰 Papers & Summary", "💬 Q&A & Generation", "📊 Analytics"])
+tab1, tab2, tab3, tab_debug = st.tabs(["📰 Papers & Summary", "💬 Q&A & Generation", "📊 Analytics", "🔧 Debug"])
 
 # ============================================================================
 # TAB 1: PAPERS + AUTO SUMMARY + RESEARCH GAPS
@@ -495,6 +495,56 @@ System Performance: {len(st.session_state.feedback_history)} feedback entries tr
                 )
     else:
         st.info("👉 Complete a search first to export the analysis")
+
+# ============================================================================
+# TAB 4: DEBUG
+# ============================================================================
+with tab_debug:
+    st.subheader("🔧 Debug & System Status")
+    
+    # Check LLM backend
+    try:
+        from llm.backend import LLMBackend
+        llm = LLMBackend()
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            status = llm.get_status()
+            st.metric("Ollama Available", "✅" if status["ollama"] else "❌")
+        
+        with col2:
+            st.metric("Gemini Available", "✅" if status["gemini"] else "❌")
+        
+        with col3:
+            st.metric("Active Backend", status["active_backend"])
+        
+        st.divider()
+        
+        # List available models
+        st.subheader("📋 Available Gemini Models")
+        if st.button("🔄 List Models"):
+            models = llm.list_available_models()
+            if models:
+                st.success(f"Found {len(models)} models:")
+                for model in models:
+                    st.code(model)
+            else:
+                st.error("No models found or API key not working")
+        
+        st.divider()
+        
+        # API Key status
+        st.subheader("🔑 API Key Status")
+        api_key = os.getenv("GOOGLE_API_KEY", "NOT SET")
+        if api_key == "NOT SET":
+            st.error("⚠️ GOOGLE_API_KEY environment variable not set")
+        else:
+            masked_key = api_key[:20] + "..." + api_key[-4:] if len(api_key) > 24 else "***"
+            st.success(f"✅ API Key configured: {masked_key}")
+    
+    except Exception as e:
+        st.error(f"❌ Error loading debug info: {e}")
 
 # ============================================================================
 # FOOTER

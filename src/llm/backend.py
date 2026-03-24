@@ -120,6 +120,21 @@ class LLMBackend:
         except Exception as e:
             yield f"❌ Gemini error: {str(e)}"
     
+    def list_available_models(self) -> list:
+        """List available Gemini models"""
+        try:
+            api_key = os.getenv("GOOGLE_API_KEY")
+            url = f"https://generativelanguage.googleapis.com/v1/models?key={api_key}"
+            response = requests.get(url, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "models" in data:
+                    return [model.get("name", "unknown") for model in data["models"]]
+            return []
+        except Exception as e:
+            return [f"Error listing models: {str(e)}"]
+    
     def get_status(self) -> dict:
         """Get current backend status"""
         return {
